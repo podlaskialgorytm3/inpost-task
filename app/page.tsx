@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 import type { Point, PointsResponse } from "@/lib/types";
@@ -214,6 +214,11 @@ export default function Home() {
   const [data, setData] = useState<PointsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLElement | null>(null);
+
+  const scrollToResults = useCallback(() => {
+    resultsRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+  }, []);
 
   const handleSearch = useCallback(
     async (nextFilters: Filters) => {
@@ -263,6 +268,7 @@ export default function Home() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    scrollToResults();
     void handleSearch(filters);
   };
 
@@ -877,7 +883,7 @@ export default function Home() {
         </form>
       </section>
 
-      <section className={styles.results}>
+      <section className={styles.results} ref={resultsRef}>
         <div className={styles.resultsHeader}>
           <div>
             <h2 className={styles.sectionTitle}>{m.resultsTitle}</h2>
