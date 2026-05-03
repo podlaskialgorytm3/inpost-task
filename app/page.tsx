@@ -141,6 +141,13 @@ const encodePointPayload = (point: Point) => {
   return encodeURIComponent(btoa(binary));
 };
 
+const formatApiEnumLabel = (value: string) =>
+  value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+
 export default function Home() {
   const { locale, setLocale, theme, toggleTheme, messages: m } = useAppSettings();
 
@@ -1045,7 +1052,15 @@ export default function Home() {
                       : point.availableCompartments}
                   </span>
                   <span>
-                    {m.cardType}: {point.type.join(", ") || "-"}
+                    {m.cardType}:{" "}
+                    {point.type.length > 0
+                      ? point.type
+                          .map(
+                            (type) =>
+                              m.options.types[type] ?? formatApiEnumLabel(type),
+                          )
+                          .join(", ")
+                      : "-"}
                   </span>
                   <span>
                     {m.cardPayment}:{" "}

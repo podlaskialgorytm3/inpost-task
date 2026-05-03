@@ -20,6 +20,10 @@ const options = {
     standard_courier_send: "Envoi courrier standard",
     standard_courier_reverse_return_send: "Retours courrier",
   },
+  types: {
+    parcel_locker: "Consigne automatique",
+    pop: "Point relais",
+  },
   status: {
     "": "Tout statut",
     Operating: "En service",

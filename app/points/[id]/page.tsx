@@ -36,6 +36,13 @@ const formatBool = (
   return value ? yes : no;
 };
 
+const formatApiEnumLabel = (value: string) =>
+  value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+
 export default function PointDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -167,6 +174,19 @@ export default function PointDetailsPage() {
                 <span className={styles.label}>Longitude</span>
                 <span className={styles.value}>
                   {point.location.longitude ?? m.cardCoordsUnavailable}
+                </span>
+              </div>
+              <div className={styles.cell}>
+                <span className={styles.label}>{m.cardType}</span>
+                <span className={styles.value}>
+                  {point.type.length > 0
+                    ? point.type
+                        .map(
+                          (type) =>
+                            m.options.types[type] ?? formatApiEnumLabel(type),
+                        )
+                        .join(", ")
+                    : "-"}
                 </span>
               </div>
             </div>

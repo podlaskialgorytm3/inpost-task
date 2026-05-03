@@ -20,6 +20,10 @@ const options = {
     standard_courier_send: "Standard-Kurierversand",
     standard_courier_reverse_return_send: "Kurier-Rücksendungen",
   },
+  types: {
+    parcel_locker: "Paketautomat",
+    pop: "Abholpunkt",
+  },
   status: {
     "": "Beliebiger Status",
     Operating: "In Betrieb",

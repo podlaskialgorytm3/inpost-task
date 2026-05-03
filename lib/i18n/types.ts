@@ -2,6 +2,7 @@ export type Locale = "en" | "pl" | "de" | "fr";
 
 export type OptionMaps = {
   functions: Record<string, string>;
+  types: Record<string, string>;
   status: Record<string, string>;
   availability: Record<string, string>;
   sortBy: Record<string, string>;
@@ -91,6 +92,11 @@ export type Messages = {
   toolbarLanguage: string;
   toolbarThemeLight: string;
   toolbarThemeDark: string;
+  toggleRevealMe: string;
+  toggleHideMe: string;
+  toggleFilters: string;
+  toggleMap: string;
+  toggleResults: string;
   options: OptionMaps;
 };
 

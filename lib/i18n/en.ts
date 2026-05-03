@@ -20,6 +20,10 @@ const options = {
     standard_courier_send: "Standard courier send",
     standard_courier_reverse_return_send: "Courier returns",
   },
+  types: {
+    parcel_locker: "Parcel locker",
+    pop: "Pickup point",
+  },
   status: {
     "": "Any status",
     Operating: "Operating",

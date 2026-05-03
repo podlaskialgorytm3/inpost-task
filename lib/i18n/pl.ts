@@ -20,6 +20,10 @@ const options = {
     standard_courier_send: "Nadawanie kurierem",
     standard_courier_reverse_return_send: "Zwroty kurierem",
   },
+  types: {
+    parcel_locker: "Paczkomat",
+    pop: "Punkt odbioru",
+  },
   status: {
     "": "Dowolny status",
     Operating: "Działa",
