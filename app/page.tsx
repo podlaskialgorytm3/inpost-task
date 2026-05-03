@@ -121,17 +121,6 @@ const buildQuery = (filters: Filters) => {
   return params.toString();
 };
 
-const getAvailabilityClass = (status: string | null) => {
-  const normalized = status?.toUpperCase();
-  if (normalized === "AVAILABLE") {
-    return styles.availabilityGood;
-  }
-  if (normalized === "NOT_AVAILABLE") {
-    return styles.availabilityBad;
-  }
-  return styles.availabilityNeutral;
-};
-
 const buildMapUrl = (point: Point) => {
   const { latitude, longitude } = point.location;
   if (latitude === null || longitude === null) {
@@ -960,9 +949,6 @@ export default function Home() {
 
         <div className={styles.cards}>
           {results.map((point, index) => {
-            const availabilityClass = getAvailabilityClass(
-              point.lockerAvailability?.status ?? null,
-            );
             const mapUrl = buildMapUrl(point);
             const detailsHref = `/points/${encodeURIComponent(point.id)}?data=${encodePointPayload(point)}`;
             const functionList = point.functions.slice(0, 5);
@@ -989,9 +975,6 @@ export default function Home() {
                     <h3 className={styles.cardTitle}>{point.name}</h3>
                     <p className={styles.cardSubtitle}>{point.status}</p>
                   </div>
-                  <span className={`${styles.statusPill} ${availabilityClass}`}>
-                    {point.lockerAvailability?.status ?? "UNKNOWN"}
-                  </span>
                 </div>
 
                 <p className={styles.address}>
