@@ -164,12 +164,30 @@ export default function Home() {
 
     try {
       const response = await fetch(`/api/points?${buildQuery(nextFilters)}`);
-      if (!response.ok) {
-        throw new Error("Unable to load points. Please try again.");
+      let payloadUnknown: unknown;
+      try {
+        payloadUnknown = await response.json();
+      } catch {
+        throw new Error(
+          "The server returned an unexpected response. Please try again.",
+        );
       }
 
-      const payload = (await response.json()) as PointsResponse;
-      setData(payload);
+      if (!response.ok) {
+        const fromApi =
+          payloadUnknown &&
+          typeof payloadUnknown === "object" &&
+          "error" in payloadUnknown &&
+          typeof (payloadUnknown as { error: unknown }).error === "string"
+            ? (payloadUnknown as { error: string }).error
+            : null;
+        throw new Error(
+          fromApi ??
+            "We could not load parcel points. Check your connection and try again.",
+        );
+      }
+
+      setData(payloadUnknown as PointsResponse);
     } catch (fetchError) {
       const message =
         fetchError instanceof Error
@@ -182,7 +200,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    void handleSearch(DEFAULT_FILTERS);
+    const id = window.setTimeout(() => {
+      void handleSearch(DEFAULT_FILTERS);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [handleSearch]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -253,8 +274,8 @@ export default function Home() {
         p.id,
         p.name,
         p.country,
-        p.location.latitude ?? "",
-        p.location.longitude ?? "",
+        p.location.latitude === null ? "" : String(p.location.latitude),
+        p.location.longitude === null ? "" : String(p.location.longitude),
         p.addressDetails.postCode ?? "",
         p.addressDetails.city ?? "",
         p.openingHours ?? "",
@@ -276,11 +297,11 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
-  // Map integration (Leaflet via CDN)
-  const mapRef = useState<any>(null)[0];
+  // Map integration (Leaflet via CDN — no bundled types)
   useEffect(() => {
     let mounted = true;
     const ensureLeaflet = async () => {
+      /* eslint-disable @typescript-eslint/no-explicit-any -- Leaflet global from script tag */
       if (!(window as any).L) {
         const link = document.createElement("link");
         link.rel = "stylesheet";
@@ -339,6 +360,7 @@ export default function Home() {
         const group = L.featureGroup(markers);
         map.fitBounds(group.getBounds().pad(0.2));
       }
+      /* eslint-enable @typescript-eslint/no-explicit-any */
     };
 
     void ensureLeaflet();

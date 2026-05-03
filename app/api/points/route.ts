@@ -96,8 +96,11 @@ export const GET = async (request: Request) => {
     const data = await fetchPoints(query);
     return NextResponse.json(data);
   } catch (error) {
+    console.error("[api/points] InPost fetch failed:", error);
     const message =
-      error instanceof Error ? error.message : "Unable to fetch InPost points.";
+      error instanceof Error
+        ? error.message
+        : "We could not load parcel points right now. Please try again in a moment.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 };
