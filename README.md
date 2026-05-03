@@ -42,6 +42,8 @@ I kept the stack boring on purpose: one framework, TypeScript, no database — s
 | Lint        | ESLint (eslint-config-next) |
 | Map         | Leaflet 1.9 (CDN) |
 
+**Dependencies:** all packages and versions are declared in **`package.json`** / **`package-lock.json`** (technical requirement: nothing relies on undeclared globals except the browser + Node runtime).
+
 ## 6. Architecture
 
 Layers map cleanly to the non-functional “separation of concerns” checklist:
@@ -62,16 +64,18 @@ Layers map cleanly to the non-functional “separation of concerns” checklist:
 
 ## 7. Build instructions
 
+Dependencies are listed in **`package.json`** (runtime: `next`, `react`, `react-dom`; dev: TypeScript, ESLint, Vitest, types). After install, the production bundle is created with:
+
 ```bash
-git clone <your-fork-or-copy>
-cd inpost-task
 npm install
 npm run build
 ```
 
-Requires Node.js compatible with Next.js 16 (see Next.js docs if your version is older).
+No database or extra services are required.
 
 ## 8. Run instructions
+
+**Development** (hot reload):
 
 ```bash
 npm run dev
@@ -79,12 +83,130 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The UI loads default filters and fetches points automatically.
 
-Production-style run:
+**Production-style** (matches typical deploy steps):
 
 ```bash
 npm run build
 npm start
 ```
+
+Then open [http://localhost:3000](http://localhost:3000) (default port **3000**).
+
+---
+
+## Prerequisites & setup (technical checklist)
+
+### Prerequisites
+
+- **Node.js** 20.9+ (see `engines` in `package.json`; use current 20 LTS if the build complains about engine warnings).
+- **npm** 10+ (comes with Node), or another client compatible with `package-lock.json`.
+- **Git** (to clone the repo).
+
+No global installs of Next.js or TypeScript are assumed—everything comes from `npm install`.
+
+### Step-by-step: clone, install, run
+
+1. **Clone and enter the project**
+
+   ```bash
+   git clone https://github.com/<your-username>/inpost-task.git
+   cd inpost-task
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Environment (optional)**  
+   The InPost points API used here is public and needs **no API key**. If you add local overrides later, copy the template:
+
+   ```bash
+   # macOS / Linux
+   cp .env.example .env
+
+   # Windows (PowerShell / cmd)
+   copy .env.example .env
+   ```
+
+4. **Run** — choose one:
+
+   - Development: `npm run dev` → http://localhost:3000  
+   - Production locally: `npm run build` then `npm start` → http://localhost:3000  
+
+### Verify installation
+
+After `npm run dev` (or `npm start`):
+
+- The home page loads without a blank screen.
+- A table of points appears after the first request (may take a while on a full-country fetch).
+- Optional: open http://localhost:3000/api/points?country=PL&limit=5 — you should see JSON with `items` and `meta`.
+
+**Quick API smoke test (Windows PowerShell)** — uses `maxPages=1` so the server does not paginate the whole country:
+
+```powershell
+$uri = "http://localhost:3000/api/points?country=PL&limit=5&maxPages=1"
+
+# Raw HTTP check (status + start of body)
+$response = Invoke-WebRequest -Uri $uri -UseBasicParsing
+$response.StatusCode   # expect 200
+$response.Content.Substring(0, [Math]::Min(400, $response.Content.Length))
+
+# Parsed JSON — confirm `meta` / `items`
+$json = Invoke-RestMethod -Uri $uri -Method Get
+$json.meta
+$json.items.Count
+```
+
+If `Invoke-WebRequest` fails with a connection error, the dev server is not running or is on another port.
+
+Try in the UI:
+
+1. Search with country **PL** and city **Warszawa** (or your own city).
+2. Toggle a function filter (e.g. parcel collect) and confirm the list changes.
+3. Use **Export** to download GeoJSON or CSV if results are present.
+
+### Troubleshooting
+
+**Port 3000 already in use**
+
+- Windows (PowerShell): `Get-NetTCPConnection -LocalPort 3000` then stop the owning process, or run on another port: `npx next dev -p 3001`.
+
+**`npm run build` fails on TypeScript or “Unsupported engine”**
+
+- Upgrade to the latest **Node 20 LTS** and run `npm install` again.
+
+**429 / rate limit from InPost**
+
+- The app retries with backoff and caches full-country fetches briefly. For experiments, reduce load: use **Max pages** in the UI or `maxPages` in the API query, and avoid hammering the API in a tight loop.
+
+**Map tiles or markers missing**
+
+- Leaflet CSS/JS load from a CDN; disable strict blockers for `unpkg.com` and `openstreetmap.org`, or rely on the table and CSV/GeoJSON export.
+
+### Repository layout
+
+Expected shape (high level):
+
+```text
+├── README.md
+├── package.json
+├── package-lock.json
+├── .gitignore
+├── .env.example
+├── app/                 # Next.js App Router (UI + API route)
+├── lib/                 # Shared logic (InPost client, types)
+├── tests/               # Vitest specs
+├── vitest.config.ts
+└── next.config.ts
+```
+
+**Note:** The repository must stay **public** and reachable for reviewers until the deadline stated in the task materials. Making it public is done in your Git host settings, not in this repo.
+
+### Optional deployment
+
+This repo is not tied to one host. Typical options for Next.js: **Vercel**, **Railway**, **Render**, or any Node-capable platform. Set the build command to `npm run build` and the start command to `npm start`. If you do not deploy, use local verification and screenshots as proof (see section 10).
 
 ## 9. Usage examples
 
@@ -114,7 +236,13 @@ Unit tests cover core helpers (distance + opening hours parsing):
 npm test
 ```
 
-Vitest resolves the `@/` alias via `vitest.config.ts`. Use `npm test -- --run` in CI for a non-watch run if needed.
+For a single non-watch run (CI or quick check):
+
+```bash
+npm run test:run
+```
+
+Vitest resolves the `@/` alias via `vitest.config.ts`.
 
 ## 12. Assumptions
 
