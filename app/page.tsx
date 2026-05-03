@@ -132,9 +132,6 @@ const getAvailabilityClass = (status: string | null) => {
   return styles.availabilityNeutral;
 };
 
-const formatFunctionLabel = (value: string) =>
-  value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-
 const buildMapUrl = (point: Point) => {
   const { latitude, longitude } = point.location;
   if (latitude === null || longitude === null) {
@@ -1032,7 +1029,7 @@ export default function Home() {
                 <div className={styles.tagList}>
                   {functionList.map((item) => (
                     <span key={item} className={styles.tag}>
-                      {formatFunctionLabel(item)}
+                      {m.options.functions[item] ?? item}
                     </span>
                   ))}
                   {remaining > 0 && (

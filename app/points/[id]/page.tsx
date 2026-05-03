@@ -154,7 +154,7 @@ export default function PointDetailsPage() {
                 ) : (
                   point.functions.map((item) => (
                     <span key={item} className={styles.tag}>
-                      {item}
+                      {m.options.functions[item] ?? item}
                     </span>
                   ))
                 )}
