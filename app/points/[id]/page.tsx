@@ -109,7 +109,7 @@ export default function PointDetailsPage() {
           {theme === "dark" ? m.toolbarThemeLight : m.toolbarThemeDark}
         </button>
       </div>
-      <Link className={styles.back} href="/">
+      <Link className={styles.back} href="/finder">
         ← {m.btnReset}
       </Link>
       <section className={styles.card}>
