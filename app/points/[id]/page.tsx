@@ -46,6 +46,35 @@ export default function PointDetailsPage() {
     () => decodePointPayload(searchParams.get("data")),
     [searchParams],
   );
+  const googleMapsEmbedUrl = useMemo(() => {
+    if (!point) {
+      return null;
+    }
+
+    const lat = point.location.latitude;
+    const lon = point.location.longitude;
+    if (lat !== null && lon !== null) {
+      return `https://maps.google.com/maps?q=&layer=c&cbll=${lat},${lon}&cbp=12,0,0,0,0&output=svembed`;
+    }
+
+    const address = [
+      point.name,
+      point.address.line1,
+      point.address.line2,
+      point.addressDetails.postCode,
+      point.addressDetails.city,
+      point.addressDetails.province,
+      point.country,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    if (!address) {
+      return null;
+    }
+
+    return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&z=17&output=embed`;
+  }, [point]);
   const [photos, setPhotos] = useState<
     { ref: string; width: number; height: number; attributions: string[] }[]
   >([]);
@@ -260,6 +289,22 @@ export default function PointDetailsPage() {
                 </div>
               ) : null}
             </div>
+
+            {googleMapsEmbedUrl ? (
+              <div className={styles.cell}>
+                <span className={styles.label}>Google Maps</span>
+                <div className={styles.mapFrameWrap}>
+                  <iframe
+                    title={`Google Maps: ${point.name}`}
+                    src={googleMapsEmbedUrl}
+                    className={styles.mapFrame}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            ) : null}
           </>
         )}
       </section>
