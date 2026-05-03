@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./page.module.css";
 import type { Point, PointsResponse } from "@/lib/types";
+import { interpolate, LOCALES, type Locale } from "@/lib/i18n";
+import { useAppSettings } from "./providers";
 
 type Filters = {
   query: string;
@@ -22,6 +24,7 @@ type Filters = {
   sortDir: "asc" | "desc";
   limit: number;
   perPage: number;
+  maxPages: string;
 };
 
 const DEFAULT_FILTERS: Filters = {
@@ -42,43 +45,36 @@ const DEFAULT_FILTERS: Filters = {
   sortDir: "desc",
   limit: 200,
   perPage: 100,
+  maxPages: "",
 };
 
-const FUNCTION_OPTIONS = [
-  { value: "", label: "Any function" },
-  { value: "parcel_send", label: "Parcel send" },
-  { value: "parcel_collect", label: "Parcel collect" },
-  { value: "parcel", label: "Parcel" },
-  { value: "allegro_parcel_send", label: "Allegro parcel send" },
-  { value: "allegro_parcel_collect", label: "Allegro parcel collect" },
-  { value: "standard_courier_send", label: "Standard courier send" },
-  { value: "standard_courier_reverse_return_send", label: "Courier returns" },
-];
+const FUNCTION_OPTION_VALUES = [
+  "",
+  "parcel_send",
+  "parcel_collect",
+  "parcel",
+  "allegro_parcel_send",
+  "allegro_parcel_collect",
+  "standard_courier_send",
+  "standard_courier_reverse_return_send",
+] as const;
 
-const STATUS_OPTIONS = [
-  { value: "", label: "Any status" },
-  { value: "Operating", label: "Operating" },
-  { value: "Temporarily unavailable", label: "Temporarily unavailable" },
-  { value: "Out of order", label: "Out of order" },
-];
+const STATUS_OPTION_VALUES = [
+  "",
+  "Operating",
+  "Temporarily unavailable",
+  "Out of order",
+] as const;
 
-const AVAILABILITY_OPTIONS = [
-  { value: "", label: "Any availability" },
-  { value: "AVAILABLE", label: "Available" },
-  { value: "NOT_AVAILABLE", label: "Not available" },
-  { value: "NO_DATA", label: "No data" },
-];
+const AVAILABILITY_OPTION_VALUES = [
+  "",
+  "AVAILABLE",
+  "NOT_AVAILABLE",
+  "NO_DATA",
+] as const;
 
-const SORT_BY_OPTIONS = [
-  { value: "availability", label: "Availability" },
-  { value: "distance", label: "Distance" },
-  { value: "name", label: "Name" },
-];
-
-const SORT_DIR_OPTIONS = [
-  { value: "desc", label: "Desc" },
-  { value: "asc", label: "Asc" },
-];
+const SORT_BY_VALUES = ["availability", "distance", "name"] as const;
+const SORT_DIR_VALUES = ["desc", "asc"] as const;
 
 const buildQuery = (filters: Filters) => {
   const params = new URLSearchParams();
@@ -116,6 +112,11 @@ const buildQuery = (filters: Filters) => {
   params.set("limit", String(filters.limit));
   params.set("perPage", String(filters.perPage));
 
+  const maxPagesParam = toNumericParam(filters.maxPages);
+  if (maxPagesParam) {
+    params.set("maxPages", maxPagesParam);
+  }
+
   return params.toString();
 };
 
@@ -144,60 +145,104 @@ const buildMapUrl = (point: Point) => {
   )}`;
 };
 
-const formatDistance = (distance: number | null | undefined) => {
-  if (distance === null || distance === undefined) {
-    return "Distance unavailable";
-  }
-
-  return `${distance.toFixed(2)} km away`;
-};
-
 export default function Home() {
+  const { locale, setLocale, theme, toggleTheme, messages: m } = useAppSettings();
+
+  const functionOptions = useMemo(
+    () =>
+      FUNCTION_OPTION_VALUES.map((value) => ({
+        value,
+        label: m.options.functions[value] ?? value,
+      })),
+    [m],
+  );
+
+  const statusOptions = useMemo(
+    () =>
+      STATUS_OPTION_VALUES.map((value) => ({
+        value,
+        label: m.options.status[value] ?? value,
+      })),
+    [m],
+  );
+
+  const availabilityOptions = useMemo(
+    () =>
+      AVAILABILITY_OPTION_VALUES.map((value) => ({
+        value,
+        label: m.options.availability[value] ?? value,
+      })),
+    [m],
+  );
+
+  const sortByOptions = useMemo(
+    () =>
+      SORT_BY_VALUES.map((value) => ({
+        value,
+        label: m.options.sortBy[value],
+      })),
+    [m],
+  );
+
+  const sortDirOptions = useMemo(
+    () =>
+      SORT_DIR_VALUES.map((value) => ({
+        value,
+        label: m.options.sortDir[value],
+      })),
+    [m],
+  );
+
+  const formatDistanceKm = (distance: number | null | undefined) => {
+    if (distance === null || distance === undefined) {
+      return m.distanceUnavailable;
+    }
+    return interpolate(m.distanceKmAway, { n: distance.toFixed(2) });
+  };
+
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [data, setData] = useState<PointsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = useCallback(async (nextFilters: Filters) => {
-    setLoading(true);
-    setError(null);
+  const handleSearch = useCallback(
+    async (nextFilters: Filters) => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const response = await fetch(`/api/points?${buildQuery(nextFilters)}`);
-      let payloadUnknown: unknown;
       try {
-        payloadUnknown = await response.json();
-      } catch {
-        throw new Error(
-          "The server returned an unexpected response. Please try again.",
-        );
-      }
+        const response = await fetch(`/api/points?${buildQuery(nextFilters)}`);
+        let payloadUnknown: unknown;
+        try {
+          payloadUnknown = await response.json();
+        } catch {
+          throw new Error(m.errUnexpectedResponse);
+        }
 
-      if (!response.ok) {
-        const fromApi =
-          payloadUnknown &&
-          typeof payloadUnknown === "object" &&
-          "error" in payloadUnknown &&
-          typeof (payloadUnknown as { error: unknown }).error === "string"
-            ? (payloadUnknown as { error: string }).error
-            : null;
-        throw new Error(
-          fromApi ??
-            "We could not load parcel points. Check your connection and try again.",
-        );
-      }
+        if (!response.ok) {
+          const fromApi =
+            payloadUnknown &&
+            typeof payloadUnknown === "object" &&
+            "error" in payloadUnknown &&
+            typeof (payloadUnknown as { error: unknown }).error === "string"
+              ? (payloadUnknown as { error: string }).error
+              : null;
+          throw new Error(fromApi ?? m.errLoadPoints);
+        }
 
-      setData(payloadUnknown as PointsResponse);
-    } catch (fetchError) {
-      const message =
-        fetchError instanceof Error
-          ? fetchError.message
-          : "Unexpected error while loading points.";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        setData(payloadUnknown as PointsResponse);
+      } catch (fetchError) {
+        const message =
+          fetchError instanceof Error
+            ? fetchError.message
+            : m.errUnexpected;
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [m],
+  );
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -297,7 +342,6 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
-  // Map integration (Leaflet via CDN — no bundled types)
   useEffect(() => {
     let mounted = true;
     const ensureLeaflet = async () => {
@@ -322,7 +366,6 @@ export default function Home() {
       const L = (window as any).L;
       if (!L) return;
 
-      // initialize map once
       const container = document.getElementById("inpost-map");
       if (!container) return;
 
@@ -335,10 +378,9 @@ export default function Home() {
         (container as any)._leaflet_map = map;
       }
 
-      // clear existing markers
       if ((container as any)._markers) {
-        for (const m of (container as any)._markers) {
-          map.removeLayer(m);
+        for (const marker of (container as any)._markers) {
+          map.removeLayer(marker);
         }
       }
 
@@ -380,38 +422,61 @@ export default function Home() {
   const cacheAgeSeconds = data?.meta.cacheAgeSeconds ?? null;
   const fetchMode = data?.meta.fetchMode ?? "all";
   const truncated = data?.meta.truncated ?? false;
-  const sortByLabel =
-    SORT_BY_OPTIONS.find((option) => option.value === filters.sortBy)?.label ??
-    "Availability";
+  const sortByLabel = m.options.sortBy[filters.sortBy];
+  const fetchModeLabel =
+    fetchMode === "sample" ? m.fetchModeSample : m.fetchModeAll;
 
   return (
     <div className={styles.page}>
       <header className={styles.hero}>
         <div className={styles.heroTop}>
-          <span className={styles.badge}>Smart Finder</span>
-          <span className={styles.badgeAlt}>Live InPost API</span>
+          <div className={styles.heroBadges}>
+            <span className={styles.badge}>{m.badgeSmartFinder}</span>
+            <span className={styles.badgeAlt}>{m.badgeLiveApi}</span>
+          </div>
+          <div className={styles.toolbar}>
+            <label htmlFor="locale-select" className={styles.srOnly}>
+              {m.toolbarLanguage}
+            </label>
+            <select
+              id="locale-select"
+              className={styles.localeSelect}
+              value={locale}
+              onChange={(event) => setLocale(event.target.value as Locale)}
+            >
+              {LOCALES.map((opt) => (
+                <option key={opt.code} value={opt.code}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={styles.themeToggle}
+              onClick={toggleTheme}
+              aria-pressed={theme === "dark"}
+            >
+              {theme === "dark" ? m.toolbarThemeLight : m.toolbarThemeDark}
+            </button>
+          </div>
         </div>
-        <h1 className={styles.heroTitle}>InPost Locker Finder</h1>
-        <p className={styles.heroCopy}>
-          Filter parcel lockers by city, postal code, radius around coordinates,
-          opening time, and availability. The app pulls the full InPost dataset
-          (cached for speed) and ranks results by availability or distance.
-        </p>
+        <h1 className={styles.heroTitle}>{m.heroTitle}</h1>
+        <p className={styles.heroCopy}>{m.heroCopy}</p>
         <div className={styles.heroStats}>
           <div className={styles.stat}>
-            <span className={styles.statLabel}>Sample size</span>
+            <span className={styles.statLabel}>{m.statSampleSize}</span>
             <span className={styles.statValue}>
               {hasData ? totalFetched : "--"}
             </span>
           </div>
           <div className={styles.stat}>
-            <span className={styles.statLabel}>Filtered</span>
+            <span className={styles.statLabel}>{m.statFiltered}</span>
             <span className={styles.statValue}>
               {hasData ? totalFiltered : "--"}
             </span>
           </div>
           <div className={styles.stat}>
-            <span className={styles.statLabel}>Pages fetched</span>
+            <span className={styles.statLabel}>{m.statPagesFetched}</span>
             <span className={styles.statValue}>
               {hasData
                 ? totalPages
@@ -425,22 +490,19 @@ export default function Home() {
 
       <section className={styles.panel}>
         <div>
-          <h2 className={styles.sectionTitle}>Search Filters</h2>
-          <p className={styles.sectionCopy}>
-            Combine multiple filters to narrow results. The API fetches the
-            complete dataset and caches it briefly to keep repeat searches fast.
-          </p>
+          <h2 className={styles.sectionTitle}>{m.searchFiltersTitle}</h2>
+          <p className={styles.sectionCopy}>{m.searchFiltersCopy}</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="query">
-              Keyword
+              {m.labelKeyword}
             </label>
             <input
               id="query"
               className={styles.input}
-              placeholder="Locker name, street, or district"
+              placeholder={m.phKeyword}
               value={filters.query}
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, query: event.target.value }))
@@ -450,12 +512,12 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="city">
-              City
+              {m.labelCity}
             </label>
             <input
               id="city"
               className={styles.input}
-              placeholder="Warsaw"
+              placeholder={m.phCity}
               value={filters.city}
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, city: event.target.value }))
@@ -465,12 +527,12 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="province">
-              Province
+              {m.labelProvince}
             </label>
             <input
               id="province"
               className={styles.input}
-              placeholder="mazowieckie"
+              placeholder={m.phProvince}
               value={filters.province}
               onChange={(event) =>
                 setFilters((prev) => ({
@@ -483,12 +545,12 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="postalCode">
-              Postal code
+              {m.labelPostalCode}
             </label>
             <input
               id="postalCode"
               className={styles.input}
-              placeholder="00-000"
+              placeholder={m.phPostal}
               value={filters.postalCode}
               onChange={(event) =>
                 setFilters((prev) => ({
@@ -501,12 +563,12 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="country">
-              Country
+              {m.labelCountry}
             </label>
             <input
               id="country"
               className={styles.input}
-              placeholder="PL"
+              placeholder={m.phCountry}
               value={filters.country}
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, country: event.target.value }))
@@ -516,14 +578,14 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="latitude">
-              Latitude
+              {m.labelLatitude}
             </label>
             <input
               id="latitude"
               className={styles.input}
               type="number"
               step="0.0001"
-              placeholder="52.2297"
+              placeholder={m.phLat}
               value={filters.latitude}
               onChange={(event) =>
                 setFilters((prev) => ({
@@ -536,14 +598,14 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="longitude">
-              Longitude
+              {m.labelLongitude}
             </label>
             <input
               id="longitude"
               className={styles.input}
               type="number"
               step="0.0001"
-              placeholder="21.0122"
+              placeholder={m.phLon}
               value={filters.longitude}
               onChange={(event) =>
                 setFilters((prev) => ({
@@ -556,14 +618,14 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="radiusKm">
-              Radius (km)
+              {m.labelRadiusKm}
             </label>
             <input
               id="radiusKm"
               className={styles.input}
               type="number"
               step="0.1"
-              placeholder="5"
+              placeholder={m.phRadius}
               value={filters.radiusKm}
               onChange={(event) =>
                 setFilters((prev) => ({
@@ -576,7 +638,7 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="function">
-              Function
+              {m.labelFunction}
             </label>
             <select
               id="function"
@@ -589,7 +651,7 @@ export default function Home() {
                 }))
               }
             >
-              {FUNCTION_OPTIONS.map((option) => (
+              {functionOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -599,7 +661,7 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="status">
-              Status
+              {m.labelStatus}
             </label>
             <select
               id="status"
@@ -609,7 +671,7 @@ export default function Home() {
                 setFilters((prev) => ({ ...prev, status: event.target.value }))
               }
             >
-              {STATUS_OPTIONS.map((option) => (
+              {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -619,7 +681,7 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="availability">
-              Availability
+              {m.labelAvailability}
             </label>
             <select
               id="availability"
@@ -632,7 +694,7 @@ export default function Home() {
                 }))
               }
             >
-              {AVAILABILITY_OPTIONS.map((option) => (
+              {availabilityOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -642,7 +704,7 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="openAt">
-              Open at (time)
+              {m.labelOpenAt}
             </label>
             <input
               id="openAt"
@@ -660,7 +722,7 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="perPage">
-              API page size
+              {m.labelApiPageSize}
             </label>
             <input
               id="perPage"
@@ -679,8 +741,30 @@ export default function Home() {
           </div>
 
           <div className={styles.field}>
+            <label className={styles.label} htmlFor="maxPages">
+              {m.labelMaxApiPages}
+            </label>
+            <input
+              id="maxPages"
+              className={styles.input}
+              type="number"
+              min={1}
+              max={5000}
+              placeholder={m.phMaxPagesAll}
+              value={filters.maxPages}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  maxPages: event.target.value,
+                }))
+              }
+            />
+            <span className={styles.hint}>{m.hintMaxApiPages}</span>
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label} htmlFor="limit">
-              Max results
+              {m.labelMaxResults}
             </label>
             <input
               id="limit"
@@ -700,7 +784,7 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="sortBy">
-              Sort by
+              {m.labelSortBy}
             </label>
             <select
               id="sortBy"
@@ -713,7 +797,7 @@ export default function Home() {
                 }))
               }
             >
-              {SORT_BY_OPTIONS.map((option) => (
+              {sortByOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -723,7 +807,7 @@ export default function Home() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="sortDir">
-              Sort direction
+              {m.labelSortDir}
             </label>
             <select
               id="sortDir"
@@ -736,7 +820,7 @@ export default function Home() {
                 }))
               }
             >
-              {SORT_DIR_OPTIONS.map((option) => (
+              {sortDirOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -758,11 +842,9 @@ export default function Home() {
                   }))
                 }
               />
-              <span>Open 24/7</span>
+              <span>{m.labelOpen24}</span>
             </label>
-            <span className={styles.hint}>
-              Matches points with 24/7 opening hours.
-            </span>
+            <span className={styles.hint}>{m.hintOpen24}</span>
           </div>
 
           <div className={styles.actions}>
@@ -771,7 +853,7 @@ export default function Home() {
               type="submit"
               disabled={loading}
             >
-              {loading ? "Searching..." : "Search lockers"}
+              {loading ? m.btnSearching : m.btnSearch}
             </button>
             <button
               className={styles.secondaryButton}
@@ -779,7 +861,7 @@ export default function Home() {
               onClick={handleReset}
               disabled={loading}
             >
-              Reset filters
+              {m.btnReset}
             </button>
           </div>
         </form>
@@ -788,24 +870,38 @@ export default function Home() {
       <section className={styles.results}>
         <div className={styles.resultsHeader}>
           <div>
-            <h2 className={styles.sectionTitle}>Results</h2>
+            <h2 className={styles.sectionTitle}>{m.resultsTitle}</h2>
             <p className={styles.sectionCopy}>
               {loading
-                ? "Loading live data from InPost..."
-                : `Showing ${results.length} of ${totalFiltered} matches from ${totalFetched} points.`}
+                ? m.resultsLoading
+                : interpolate(m.resultsShowing, {
+                    n: results.length,
+                    f: totalFiltered,
+                    t: totalFetched,
+                  })}
             </p>
           </div>
           <div className={styles.metaStack}>
-            <span>Fetched at {data?.meta.fetchedAt ?? "--"}</span>
-            <span>Source: {source}</span>
-            {cacheAgeSeconds !== null && source === "cache" ? (
-              <span>Cache age: {cacheAgeSeconds}s</span>
-            ) : null}
-            <span>Country: {filters.country || "--"}</span>
             <span>
-              Sort: {sortByLabel} ({filters.sortDir})
+              {m.metaFetchedAt} {data?.meta.fetchedAt ?? "--"}
             </span>
-            <span>Fetch mode: {fetchMode}</span>
+            <span>
+              {m.metaSource}: {source}
+            </span>
+            {cacheAgeSeconds !== null && source === "cache" ? (
+              <span>
+                {interpolate(m.metaCacheAge, { n: cacheAgeSeconds })}
+              </span>
+            ) : null}
+            <span>
+              {m.metaCountry}: {filters.country || "--"}
+            </span>
+            <span>
+              {m.metaSort}: {sortByLabel} ({filters.sortDir})
+            </span>
+            <span>
+              {m.metaFetchMode}: {fetchModeLabel}
+            </span>
           </div>
           <div className={styles.actions}>
             <button
@@ -814,7 +910,7 @@ export default function Home() {
               onClick={exportGeoJSON}
               disabled={!data || results.length === 0}
             >
-              Export GeoJSON
+              {m.btnExportGeo}
             </button>
             <button
               type="button"
@@ -822,7 +918,7 @@ export default function Home() {
               onClick={exportCSV}
               disabled={!data || results.length === 0}
             >
-              Export CSV
+              {m.btnExportCsv}
             </button>
           </div>
         </div>
@@ -847,16 +943,12 @@ export default function Home() {
 
         {truncated && !loading ? (
           <div className={styles.notice}>
-            Showing the first {results.length} results. Increase Max results to
-            see more.
+            {interpolate(m.noticeTruncated, { n: results.length })}
           </div>
         ) : null}
 
         {!loading && results.length === 0 && !error && (
-          <div className={styles.emptyState}>
-            No points match the current filters. Try reducing the filters or
-            increasing the max pages.
-          </div>
+          <div className={styles.emptyState}>{m.emptyState}</div>
         )}
 
         <div className={styles.cards}>
@@ -895,7 +987,7 @@ export default function Home() {
                 </div>
 
                 <p className={styles.address}>
-                  {addressLine || "Address unavailable"}
+                  {addressLine || m.cardAddressUnavailable}
                 </p>
                 {point.locationDescription && (
                   <p className={styles.description}>
@@ -904,21 +996,25 @@ export default function Home() {
                 )}
 
                 <div className={styles.cardMeta}>
-                  <span>Open: {point.openingHours ?? "Unknown"}</span>
                   <span>
-                    Available slots (by size):{" "}
+                    {m.cardOpen}: {point.openingHours ?? m.cardUnknown}
+                  </span>
+                  <span>
+                    {m.cardSlots}:{" "}
                     {point.availableCompartments === null
-                      ? "Unknown"
+                      ? m.cardUnknown
                       : point.availableCompartments}
                   </span>
-                  <span>Type: {point.type.join(", ") || "-"}</span>
                   <span>
-                    Payment:{" "}
+                    {m.cardType}: {point.type.join(", ") || "-"}
+                  </span>
+                  <span>
+                    {m.cardPayment}:{" "}
                     {point.paymentAvailable === null
-                      ? "Unknown"
+                      ? m.cardPaymentUnknown
                       : point.paymentAvailable
-                        ? "Yes"
-                        : "No"}
+                        ? m.cardPaymentYes
+                        : m.cardPaymentNo}
                   </span>
                 </div>
 
@@ -929,7 +1025,9 @@ export default function Home() {
                     </span>
                   ))}
                   {remaining > 0 && (
-                    <span className={styles.tagMuted}>+{remaining} more</span>
+                    <span className={styles.tagMuted}>
+                      {interpolate(m.cardMoreFunctions, { n: remaining })}
+                    </span>
                   )}
                 </div>
 
@@ -938,10 +1036,10 @@ export default function Home() {
                     {point.location.latitude !== null &&
                     point.location.longitude !== null
                       ? `${point.location.latitude.toFixed(4)}, ${point.location.longitude.toFixed(4)}`
-                      : "Coords unavailable"}
+                      : m.cardCoordsUnavailable}
                   </span>
                   <span className={styles.distance}>
-                    {formatDistance(point.distanceKm)}
+                    {formatDistanceKm(point.distanceKm)}
                   </span>
                   {mapUrl && (
                     <a
@@ -950,7 +1048,7 @@ export default function Home() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Open in Maps
+                      {m.cardOpenMaps}
                     </a>
                   )}
                 </div>

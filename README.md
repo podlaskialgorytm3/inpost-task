@@ -25,6 +25,7 @@ I kept the stack boring on purpose: one framework, TypeScript, no database — s
 - Live integration with the public InPost points API (no API key).
 - Pagination with bounded concurrency, retries on 429/5xx, timeout per request, and respect for `Retry-After` when present.
 - In-memory cache (per country, TTL) to avoid hammering the API on repeated searches.
+- Optional **Max API pages** in the UI (same as `maxPages` query param) to sample data without loading a full country.
 - Filters: keyword, city, province, postal code, country, function, status, availability, 24/7, open-at time, radius + lat/lon.
 - Sort by availability heuristics, distance (Haversine), or name.
 - Map preview (Leaflet via CDN), Google Maps deep links, GeoJSON/CSV export.
@@ -32,17 +33,7 @@ I kept the stack boring on purpose: one framework, TypeScript, no database — s
 
 ## 5. Tech stack
 
-| Layer        | Choice |
-|-------------|--------|
-| Framework   | Next.js 16 (App Router) |
-| Language    | TypeScript |
-| UI          | React 19 |
-| HTTP        | `fetch` (Node runtime on the API route) |
-| Tests       | Vitest |
-| Lint        | ESLint (eslint-config-next) |
-| Map         | Leaflet 1.9 (CDN) |
-
-**Dependencies:** all packages and versions are declared in **`package.json`** / **`package-lock.json`** (technical requirement: nothing relies on undeclared globals except the browser + Node runtime).
+Dependencies and versions live in **`package.json`** / **`package-lock.json`**. The repo is already wired for this stack; no extra stack narrative here.
 
 ## 6. Architecture
 
@@ -191,12 +182,14 @@ Expected shape (high level):
 
 ```text
 ├── README.md
+├── LICENSE
 ├── package.json
 ├── package-lock.json
 ├── .gitignore
 ├── .env.example
 ├── app/                 # Next.js App Router (UI + API route)
 ├── lib/                 # Shared logic (InPost client, types)
+├── docs/                # Testing notes, acceptance mapping, screenshot guides
 ├── tests/               # Vitest specs
 ├── vitest.config.ts
 └── next.config.ts
@@ -224,25 +217,90 @@ curl "http://localhost:3000/api/points?country=PL&city=Warszawa&limit=10&sortBy=
 curl "http://localhost:3000/api/points?country=PL&lat=52.2297&lon=21.0122&radiusKm=5&sortBy=distance"
 ```
 
-## 10. Screenshots / demo
+### Example API response (illustrative)
 
-There is no hosted demo in this repo. To verify quickly: run `npm run dev`, open the home page, run a search, and confirm the results table and optional map update. Export buttons produce downloadable GeoJSON/CSV for a quick sanity check.
+Shape returned by `GET /api/points` (fields depend on InPost data; `items` is truncated here):
+
+```json
+{
+  "query": { "country": "PL", "perPage": 100, "limit": 5 },
+  "meta": {
+    "pagesFetched": 1,
+    "totalFetched": 100,
+    "totalFiltered": 42,
+    "totalPages": 120,
+    "fetchedAt": "2026-05-03T12:00:00.000Z",
+    "source": "live",
+    "fetchMode": "sample",
+    "truncated": true
+  },
+  "items": [
+    {
+      "id": "KRA010",
+      "name": "KRA010",
+      "country": "PL",
+      "type": ["parcel_locker"],
+      "status": "Operating",
+      "location": { "latitude": 50.0614, "longitude": 19.9366 },
+      "address": { "line1": "…", "line2": null },
+      "addressDetails": {
+        "city": "Kraków",
+        "province": "małopolskie",
+        "postCode": "30-001",
+        "street": "…",
+        "buildingNumber": null
+      },
+      "openingHours": "24/7",
+      "functions": ["parcel_collect", "parcel_send"],
+      "lockerAvailability": { "status": "AVAILABLE", "details": null },
+      "availableCompartments": null,
+      "distanceKm": 2.05
+    }
+  ]
+}
+```
+
+## 10. Screenshots & demo
+
+> **Before final submission:** replace the SVG placeholders below with your own **PNG/JPEG** captures from a running app — see [docs/screenshots/README.md](docs/screenshots/README.md).
+
+| # | What to show |
+|---|----------------|
+| 1 | Search / filter UI |
+| 2 | Results table + meta |
+| 3 | Point detail (address, hours, availability) |
+| 4 | Map with markers |
+| 5 | GeoJSON/CSV export (or downloaded file) |
+
+![Search and filters](docs/screenshots/01-search-filters.svg)
+
+![Results table](docs/screenshots/02-results-table.svg)
+
+![Point detail](docs/screenshots/03-point-detail.svg)
+
+![Map view](docs/screenshots/04-map-view.svg)
+
+![Exports](docs/screenshots/05-exports.svg)
+
+**Demo video (optional):** add a link here (YouTube, Loom, etc.) after recording: search → results → map → export.
+
+**Hosted demo:** none baked into the repo — add your deployment URL after publishing (e.g. Vercel).
 
 ## 11. Testing
 
-Unit tests cover core helpers (distance + opening hours parsing):
+Automated tests (core: distance + opening hours):
 
 ```bash
 npm test
 ```
 
-For a single non-watch run (CI or quick check):
+Single run (CI):
 
 ```bash
 npm run test:run
 ```
 
-Vitest resolves the `@/` alias via `vitest.config.ts`.
+**Manual scenarios & API smoke checks:** [docs/TESTING.md](docs/TESTING.md).
 
 ## 12. Assumptions
 
@@ -253,9 +311,22 @@ Vitest resolves the `@/` alias via `vitest.config.ts`.
 ## 13. Limitations
 
 - Cache is per-process and lost on restart.
-- Full-country pulls are heavy; use `maxPages` + `limit` for experiments.
+- Full-country pulls are heavy; use **Max API pages** in the UI (or `maxPages` in the API) plus `limit` for experiments.
 - Leaflet loads from a CDN in the client — ad blockers or offline runs can break the map while the table still works.
 - Very large result sets are intentionally capped client-side via `limit` to protect the browser.
+- Distance is **straight-line (Haversine)**, not driving or walking time.
+
+### Out of scope (explicit)
+
+Not attempted in this repo (see functional spec options B/C and similar):
+
+- Density analysis, “dead zones”, and regional coverage reports.
+- Long-term availability monitoring, dashboards, or alerts.
+- User accounts, ratings, or saved favourites (beyond possible future work).
+- Multi-language UI.
+- Routing providers (Google/HERE) for road distance.
+
+For a mapping of **acceptance criteria (AC1–AC5)** from the task materials to this codebase, see [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
 
 ## 14. Future improvements
 
@@ -264,6 +335,18 @@ Vitest resolves the `@/` alias via `vitest.config.ts`.
 - Cluster markers on the map for dense areas.
 - Persist recent searches locally; optional favorites.
 
+## 15. License
+
+**MIT** — see [LICENSE](LICENSE).
+
+## 16. Pre-submission checklist
+
+- [ ] Repository is **public**; link works in a private/incognito window.
+- [ ] `npm install` → `npm run build` → `npm start` (or `npm run dev`) succeeds.
+- [ ] README updated with **real screenshots** instead of SVG placeholders (recommended).
+- [ ] Optional: screen recording link or deployment URL added above.
+- [ ] Submit the GitHub URL and your details via the InPost application form when required.
+
 ---
 
-_This README follows the section checklist from the task specification (problem, solution, architecture, build/run, tests, assumptions, limits) so a reviewer can onboard without prior context._
+This README matches the deliverables brief: problem, solution, features, architecture, build/run, examples, proof of functionality, testing, assumptions, and limitations.

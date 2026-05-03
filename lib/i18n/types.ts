@@ -1,0 +1,96 @@
+export type Locale = "en" | "pl" | "de" | "fr";
+
+export type OptionMaps = {
+  functions: Record<string, string>;
+  status: Record<string, string>;
+  availability: Record<string, string>;
+  sortBy: Record<string, string>;
+  sortDir: Record<string, string>;
+};
+
+export type Messages = {
+  badgeSmartFinder: string;
+  badgeLiveApi: string;
+  heroTitle: string;
+  heroCopy: string;
+  statSampleSize: string;
+  statFiltered: string;
+  statPagesFetched: string;
+  searchFiltersTitle: string;
+  searchFiltersCopy: string;
+  labelKeyword: string;
+  labelCity: string;
+  labelProvince: string;
+  labelPostalCode: string;
+  labelCountry: string;
+  labelLatitude: string;
+  labelLongitude: string;
+  labelRadiusKm: string;
+  labelFunction: string;
+  labelStatus: string;
+  labelAvailability: string;
+  labelOpenAt: string;
+  labelApiPageSize: string;
+  labelMaxApiPages: string;
+  hintMaxApiPages: string;
+  phMaxPagesAll: string;
+  labelMaxResults: string;
+  labelSortBy: string;
+  labelSortDir: string;
+  labelOpen24: string;
+  hintOpen24: string;
+  phKeyword: string;
+  phCity: string;
+  phProvince: string;
+  phPostal: string;
+  phCountry: string;
+  phLat: string;
+  phLon: string;
+  phRadius: string;
+  btnSearch: string;
+  btnSearching: string;
+  btnReset: string;
+  resultsTitle: string;
+  resultsLoading: string;
+  resultsShowing: string;
+  metaFetchedAt: string;
+  metaSource: string;
+  metaCacheAge: string;
+  metaCountry: string;
+  metaSort: string;
+  metaFetchMode: string;
+  fetchModeAll: string;
+  fetchModeSample: string;
+  btnExportGeo: string;
+  btnExportCsv: string;
+  noticeTruncated: string;
+  emptyState: string;
+  cardAddressUnavailable: string;
+  cardOpen: string;
+  cardSlots: string;
+  cardType: string;
+  cardPayment: string;
+  cardPaymentYes: string;
+  cardPaymentNo: string;
+  cardPaymentUnknown: string;
+  cardUnknown: string;
+  cardCoordsUnavailable: string;
+  cardOpenMaps: string;
+  cardMoreFunctions: string;
+  distanceUnavailable: string;
+  distanceKmAway: string;
+  errUnexpectedResponse: string;
+  errLoadPoints: string;
+  errUnexpected: string;
+  toolbarLanguage: string;
+  toolbarThemeLight: string;
+  toolbarThemeDark: string;
+  options: OptionMaps;
+};
+
+export const LOCALES: { code: Locale; label: string }[] = [
+  { code: "en", label: "English" },
+  { code: "pl", label: "Polski" },
+  { code: "de", label: "Deutsch" },
+  { code: "fr", label: "Français" },
+];
