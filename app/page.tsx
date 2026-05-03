@@ -208,6 +208,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   const handleSearch = useCallback(
     async (nextFilters: Filters) => {
@@ -532,12 +535,65 @@ export default function Home() {
       </header>
 
       <section className={styles.panel}>
-        <div>
-          <h2 className={styles.sectionTitle}>{m.searchFiltersTitle}</h2>
-          <p className={styles.sectionCopy}>{m.searchFiltersCopy}</p>
+        <div className={styles.revealBar}>
+          <div className={styles.revealItem}>
+            <button
+              type="button"
+              className={styles.revealButton}
+              onClick={() => setShowFilters((prev) => !prev)}
+              aria-expanded={showFilters}
+            >
+              <span>
+                {(showFilters ? m.toggleHideMe : m.toggleRevealMe) +
+                  " " +
+                  m.toggleFilters}
+              </span>
+              <span className={styles.revealArrow} aria-hidden>
+                {showFilters ? "▾" : "▸"}
+              </span>
+            </button>
+          </div>
+          <div className={styles.revealItem}>
+            <button
+              type="button"
+              className={styles.revealButton}
+              onClick={() => setShowMap((prev) => !prev)}
+              aria-expanded={showMap}
+            >
+              <span>
+                {(showMap ? m.toggleHideMe : m.toggleRevealMe) + " " + m.toggleMap}
+              </span>
+              <span className={styles.revealArrow} aria-hidden>
+                {showMap ? "▾" : "▸"}
+              </span>
+            </button>
+          </div>
+          <div className={styles.revealItem}>
+            <button
+              type="button"
+              className={styles.revealButton}
+              onClick={() => setShowResults((prev) => !prev)}
+              aria-expanded={showResults}
+            >
+              <span>
+                {(showResults ? m.toggleHideMe : m.toggleRevealMe) +
+                  " " +
+                  m.toggleResults}
+              </span>
+              <span className={styles.revealArrow} aria-hidden>
+                {showResults ? "▾" : "▸"}
+              </span>
+            </button>
+          </div>
         </div>
-
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={`${styles.revealPanel} ${showFilters ? styles.revealOpen : ""}`}>
+          <div>
+            <h2 className={styles.sectionTitle}>{m.searchFiltersTitle}</h2>
+            <p className={styles.sectionCopy}>{m.searchFiltersCopy}</p>
+          </div>
+        </div>
+        <div className={`${styles.revealPanel} ${showFilters ? styles.revealOpen : ""}`}>
+          <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="query">
               {m.labelKeyword}
@@ -915,11 +971,13 @@ export default function Home() {
               {m.btnReset}
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </section>
 
       <section className={styles.results}>
-        <div className={styles.resultsHeader}>
+        <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
+          <div className={styles.resultsHeader}>
           <div>
             <h2 className={styles.sectionTitle}>{m.resultsTitle}</h2>
             <p className={styles.sectionCopy}>
@@ -973,9 +1031,12 @@ export default function Home() {
             </button>
           </div>
         </div>
+        </div>
 
-        <div className={styles.mapContainer}>
-          <div id="inpost-map" className={styles.mapInner} />
+        <div className={`${styles.revealPanel} ${showMap ? styles.revealOpen : ""}`}>
+          <div className={styles.mapContainer}>
+            <div id="inpost-map" className={styles.mapInner} />
+          </div>
         </div>
 
         {error && (
@@ -1002,7 +1063,8 @@ export default function Home() {
           <div className={styles.emptyState}>{m.emptyState}</div>
         )}
 
-        <div className={styles.cards}>
+        <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
+          <div className={styles.cards}>
           {results.map((point, index) => {
             const mapUrl = buildMapUrl(point);
             const detailsHref = `/points/${encodeURIComponent(point.id)}?data=${encodePointPayload(point)}`;
@@ -1111,6 +1173,7 @@ export default function Home() {
               </article>
             );
           })}
+          </div>
         </div>
       </section>
     </div>

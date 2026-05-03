@@ -140,5 +140,12 @@ export const de: Messages = {
   toolbarLanguage: "Sprache",
   toolbarThemeLight: "Helles Design",
   toolbarThemeDark: "Dunkles Design",
+  toggleRevealMe: "Zeige:",
+  toggleHideMe: "Ausblenden:",
+  toggleFilters: "Suchfilter",
+  toggleMap: "Karte",
+  toggleResults: "Ergebnisse",
   options,
 };
+
+
