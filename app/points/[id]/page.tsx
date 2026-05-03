@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import type { Point } from "@/lib/types";
 import { useAppSettings } from "@/app/providers";
@@ -45,6 +46,97 @@ export default function PointDetailsPage() {
     () => decodePointPayload(searchParams.get("data")),
     [searchParams],
   );
+  const [photos, setPhotos] = useState<
+    { ref: string; width: number; height: number; attributions: string[] }[]
+  >([]);
+  const [photosEnabled, setPhotosEnabled] = useState(true);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [photosError, setPhotosError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!point) {
+      return;
+    }
+
+    const latitude = point.location.latitude;
+    const longitude = point.location.longitude;
+    const address = [
+      point.address.line1,
+      point.address.line2,
+      point.addressDetails.postCode,
+      point.addressDetails.city,
+      point.addressDetails.province,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const params = new URLSearchParams({
+      name: point.name,
+      address,
+      max: "6",
+    });
+    if (latitude !== null && longitude !== null) {
+      params.set("lat", String(latitude));
+      params.set("lon", String(longitude));
+    }
+
+    const controller = new AbortController();
+    const run = async () => {
+      setPhotosLoading(true);
+      setPhotosError(null);
+
+      try {
+        const response = await fetch(`/api/google-place-photos?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const payload = (await response.json()) as {
+          enabled?: boolean;
+          photos?: {
+            ref: string;
+            width: number;
+            height: number;
+            attributions?: string[];
+          }[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Nie udało się pobrać zdjęć.");
+        }
+
+        setPhotosEnabled(payload.enabled !== false);
+        setPhotos(
+          (payload.photos ?? []).map((item) => ({
+            ref: item.ref,
+            width: item.width,
+            height: item.height,
+            attributions: item.attributions ?? [],
+          })),
+        );
+      } catch (error: unknown) {
+        if (
+          error &&
+          typeof error === "object" &&
+          "name" in error &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Błąd pobierania zdjęć.";
+        setPhotosError(message);
+      } finally {
+        setPhotosLoading(false);
+      }
+    };
+
+    void run();
+
+    return () => {
+      controller.abort();
+    };
+  }, [point]);
 
   return (
     <main className={styles.page}>
@@ -130,6 +222,43 @@ export default function PointDetailsPage() {
                   ))
                 )}
               </div>
+            </div>
+
+            <div className={styles.cell}>
+              <span className={styles.label}>Zdjęcia z Google Maps</span>
+              {photosLoading ? (
+                <p className={styles.line}>Ładowanie zdjęć…</p>
+              ) : null}
+              {!photosLoading && photosError ? (
+                <p className={styles.photoError}>{photosError}</p>
+              ) : null}
+              {!photosLoading && !photosError && !photosEnabled ? (
+                <p className={styles.line}>
+                  Dodaj `GOOGLE_MAPS_API_KEY`, aby wyświetlać zdjęcia miejsca.
+                </p>
+              ) : null}
+              {!photosLoading &&
+              !photosError &&
+              photosEnabled &&
+              photos.length === 0 ? (
+                <p className={styles.line}>Brak zdjęć dla tego miejsca.</p>
+              ) : null}
+              {photos.length > 0 ? (
+                <div className={styles.photoGrid}>
+                  {photos.map((photo, index) => (
+                    <Image
+                      key={`${photo.ref}-${index}`}
+                      className={styles.photo}
+                      src={`/api/google-place-photo?ref=${encodeURIComponent(photo.ref)}&maxwidth=1200`}
+                      alt={`${point.name} - zdjęcie ${index + 1}`}
+                      width={photo.width || 1200}
+                      height={photo.height || 800}
+                      loading="lazy"
+                      unoptimized
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
           </>
         )}
