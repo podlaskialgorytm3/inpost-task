@@ -1,0 +1,8 @@
+# InPost Task — Ignore Requirements Documentation
+
+# This directory contains detailed requirements and planning documentation.
+# Files here are for reference/planning only and should not be distributed.
+
+# Ignore all files in requirements/
+requirements/
+
