@@ -1053,18 +1053,12 @@ export default function Home() {
                     <a
                       className={styles.mapLink}
                       href={mapUrl}
-                      target="_blank"
                       rel="noreferrer"
                     >
                       {m.cardOpenMaps}
                     </a>
                   )}
-                  <Link
-                    className={styles.mapLink}
-                    href={detailsHref}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <Link className={styles.mapLink} href={detailsHref}>
                     {m.cardOpenDetails}
                   </Link>
                 </div>

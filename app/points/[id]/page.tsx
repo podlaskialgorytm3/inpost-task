@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import type { Point } from "@/lib/types";
-import { useAppSettings } from "@/app/providers";
+import { LOCALES, type Locale, useAppSettings } from "@/app/providers";
 import styles from "./page.module.css";
 
 const decodePointPayload = (raw: string | null): Point | null => {
@@ -39,7 +39,7 @@ const formatBool = (
 export default function PointDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const { messages: m } = useAppSettings();
+  const { locale, setLocale, theme, toggleTheme, messages: m } = useAppSettings();
 
   const point = useMemo(
     () => decodePointPayload(searchParams.get("data")),
@@ -77,6 +77,31 @@ export default function PointDetailsPage() {
 
   return (
     <main className={styles.page}>
+      <div className={styles.toolbar}>
+        <label htmlFor="locale-select-details" className={styles.srOnly}>
+          {m.toolbarLanguage}
+        </label>
+        <select
+          id="locale-select-details"
+          className={styles.localeSelect}
+          value={locale}
+          onChange={(event) => setLocale(event.target.value as Locale)}
+        >
+          {LOCALES.map((opt) => (
+            <option key={opt.code} value={opt.code}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className={styles.themeToggle}
+          onClick={toggleTheme}
+          aria-pressed={theme === "dark"}
+        >
+          {theme === "dark" ? m.toolbarThemeLight : m.toolbarThemeDark}
+        </button>
+      </div>
       <Link className={styles.back} href="/">
         ← {m.btnReset}
       </Link>
