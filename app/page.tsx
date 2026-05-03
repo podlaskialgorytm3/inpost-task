@@ -553,38 +553,6 @@ export default function Home() {
               </span>
             </button>
           </div>
-          <div className={styles.revealItem}>
-            <button
-              type="button"
-              className={styles.revealButton}
-              onClick={() => setShowMap((prev) => !prev)}
-              aria-expanded={showMap}
-            >
-              <span>
-                {(showMap ? m.toggleHideMe : m.toggleRevealMe) + " " + m.toggleMap}
-              </span>
-              <span className={styles.revealArrow} aria-hidden>
-                {showMap ? "▾" : "▸"}
-              </span>
-            </button>
-          </div>
-          <div className={styles.revealItem}>
-            <button
-              type="button"
-              className={styles.revealButton}
-              onClick={() => setShowResults((prev) => !prev)}
-              aria-expanded={showResults}
-            >
-              <span>
-                {(showResults ? m.toggleHideMe : m.toggleRevealMe) +
-                  " " +
-                  m.toggleResults}
-              </span>
-              <span className={styles.revealArrow} aria-hidden>
-                {showResults ? "▾" : "▸"}
-              </span>
-            </button>
-          </div>
         </div>
         <div className={`${styles.revealPanel} ${showFilters ? styles.revealOpen : ""}`}>
           <div>
@@ -976,6 +944,50 @@ export default function Home() {
       </section>
 
       <section className={styles.results}>
+        <div className={styles.revealBar}>
+          <div className={styles.revealItem}>
+            <button
+              type="button"
+              className={styles.revealButton}
+              onClick={() => setShowMap((prev) => !prev)}
+              aria-expanded={showMap}
+            >
+              <span>
+                {(showMap ? m.toggleHideMe : m.toggleRevealMe) + " " + m.toggleMap}
+              </span>
+              <span className={styles.revealArrow} aria-hidden>
+                {showMap ? "▾" : "▸"}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className={`${styles.revealPanel} ${showMap ? styles.revealOpen : ""}`}>
+          <div className={styles.mapContainer}>
+            <div id="inpost-map" className={styles.mapInner} />
+          </div>
+        </div>
+
+        <div className={styles.revealBar}>
+          <div className={styles.revealItem}>
+            <button
+              type="button"
+              className={styles.revealButton}
+              onClick={() => setShowResults((prev) => !prev)}
+              aria-expanded={showResults}
+            >
+              <span>
+                {(showResults ? m.toggleHideMe : m.toggleRevealMe) +
+                  " " +
+                  m.toggleResults}
+              </span>
+              <span className={styles.revealArrow} aria-hidden>
+                {showResults ? "▾" : "▸"}
+              </span>
+            </button>
+          </div>
+        </div>
+
         <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
           <div className={styles.resultsHeader}>
           <div>
@@ -1031,12 +1043,6 @@ export default function Home() {
             </button>
           </div>
         </div>
-        </div>
-
-        <div className={`${styles.revealPanel} ${showMap ? styles.revealOpen : ""}`}>
-          <div className={styles.mapContainer}>
-            <div id="inpost-map" className={styles.mapInner} />
-          </div>
         </div>
 
         {error && (
