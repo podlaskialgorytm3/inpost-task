@@ -145,7 +145,13 @@ export const pl: Messages = {
   toggleFilters: "Filtry wyszukiwania",
   toggleMap: "Mapka",
   toggleResults: "Wyniki",
+  paginationPerPage: "Elementów na stronę",
+  paginationPrev: "Poprzednia",
+  paginationNext: "Następna",
+  paginationPage: "Strona",
   options,
 };
+
+
 
 

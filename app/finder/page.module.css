@@ -351,6 +351,62 @@
   flex-wrap: wrap;
 }
 
+.paginationWrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.paginationLabel {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.paginationSelect {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+.paginationNav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageButton,
+.pageNumber {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.pageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageNumberActive {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.paginationInfo {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .metaStack {
   display: flex;
   flex-direction: column;

@@ -145,7 +145,13 @@ export const en: Messages = {
   toggleFilters: "Search filters",
   toggleMap: "Map",
   toggleResults: "Results",
+  paginationPerPage: "Items per page",
+  paginationPrev: "Previous",
+  paginationNext: "Next",
+  paginationPage: "Page",
   options,
 };
+
+
 
 

@@ -211,6 +211,8 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const handleSearch = useCallback(
     async (nextFilters: Filters) => {
@@ -238,6 +240,7 @@ export default function Home() {
         }
 
         setData(payloadUnknown as PointsResponse);
+        setCurrentPage(1);
       } catch (fetchError) {
         const message =
           fetchError instanceof Error
@@ -458,7 +461,17 @@ export default function Home() {
     };
   }, [data]);
 
-  const results = data?.items ?? [];
+  const results = useMemo(() => data?.items ?? [], [data]);
+  const totalUiPages = Math.max(1, Math.ceil(results.length / itemsPerPage));
+  const safePage = Math.min(currentPage, totalUiPages);
+  const paginatedResults = useMemo(() => {
+    const start = (safePage - 1) * itemsPerPage;
+    return results.slice(start, start + itemsPerPage);
+  }, [results, safePage, itemsPerPage]);
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalUiPages }, (_, i) => i + 1),
+    [totalUiPages],
+  );
   const hasData = data !== null;
   const pagesFetched = data?.meta.pagesFetched ?? 0;
   const totalFetched = data?.meta.totalFetched ?? 0;
@@ -1043,6 +1056,62 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
+          <div className={styles.paginationWrap}>
+            <label className={styles.paginationLabel} htmlFor="items-per-page">
+              {m.paginationPerPage}
+            </label>
+            <select
+              id="items-per-page"
+              className={styles.paginationSelect}
+              value={itemsPerPage}
+              onChange={(event) => {
+                setItemsPerPage(Number(event.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              {[10, 20, 30, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <div className={styles.paginationNav}>
+              <button
+                type="button"
+                className={styles.pageButton}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={safePage <= 1}
+              >
+                {m.paginationPrev}
+              </button>
+              {pageNumbers.map((pageNo) => (
+                <button
+                  key={pageNo}
+                  type="button"
+                  className={`${styles.pageNumber} ${pageNo === safePage ? styles.pageNumberActive : ""}`}
+                  onClick={() => setCurrentPage(pageNo)}
+                >
+                  {pageNo}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={styles.pageButton}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(totalUiPages, prev + 1))
+                }
+                disabled={safePage >= totalUiPages}
+              >
+                {m.paginationNext}
+              </button>
+            </div>
+            <span className={styles.paginationInfo}>
+              {m.paginationPage} {safePage}/{totalUiPages}
+            </span>
+          </div>
+        </div>
         </div>
 
         {error && (
@@ -1071,7 +1140,7 @@ export default function Home() {
 
         <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
           <div className={styles.cards}>
-          {results.map((point, index) => {
+          {paginatedResults.map((point, index) => {
             const mapUrl = buildMapUrl(point);
             const detailsHref = `/points/${encodeURIComponent(point.id)}?data=${encodePointPayload(point)}`;
             const functionList = point.functions.slice(0, 5);

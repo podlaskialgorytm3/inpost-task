@@ -97,6 +97,10 @@ export type Messages = {
   toggleFilters: string;
   toggleMap: string;
   toggleResults: string;
+  paginationPerPage: string;
+  paginationPrev: string;
+  paginationNext: string;
+  paginationPage: string;
   options: OptionMaps;
 };
 
