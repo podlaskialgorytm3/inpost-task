@@ -68,6 +68,50 @@ const toSortDir = (value: string | null) => {
   return undefined;
 };
 
+type NominatimResult = {
+  lat?: string;
+  lon?: string;
+};
+
+const geocodeCityCenter = async (
+  city: string,
+  country?: string,
+  province?: string,
+) => {
+  const q = [city, province, country].filter(Boolean).join(", ");
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", q);
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("addressdetails", "0");
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "inpost-smart-finder/0.1 (geocoding radius helper)",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as NominatimResult[];
+  const first = payload[0];
+  if (!first?.lat || !first?.lon) {
+    return null;
+  }
+
+  const latitude = Number(first.lat);
+  const longitude = Number(first.lon);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  return { latitude, longitude };
+};
+
 export const GET = async (request: Request) => {
   const { searchParams } = new URL(request.url);
 
@@ -91,6 +135,27 @@ export const GET = async (request: Request) => {
     perPage: toNumber(searchParams.get("perPage"), 100, 1, 100),
     maxPages: toOptionalNumber(searchParams.get("maxPages"), 1, 5000),
   };
+
+  if (
+    query.radiusKm !== undefined &&
+    query.latitude === undefined &&
+    query.longitude === undefined &&
+    query.city
+  ) {
+    const center = await geocodeCityCenter(
+      query.city,
+      query.country,
+      query.province,
+    );
+
+    if (center) {
+      query.latitude = center.latitude;
+      query.longitude = center.longitude;
+
+      // When city is used as radius center, keep nearby points, not only exact city match.
+      query.city = undefined;
+    }
+  }
 
   try {
     const data = await fetchPoints(query);
