@@ -88,6 +88,14 @@ export const de: Messages = {
   btnSearch: "Suchen",
   btnSearching: "Suche…",
   btnReset: "Filter zurücksetzen",
+  btnUseMyLocation: "Meinen Standort verwenden",
+  btnLocating: "Standort wird ermittelt…",
+  errGeolocationUnsupported:
+    "Dieser Browser unterstützt keine Geolokalisierung.",
+  errGeolocationDenied:
+    "Standortzugriff wurde verweigert. Bitte erlauben und erneut versuchen.",
+  errGeolocationUnavailable:
+    "Standort konnte nicht ermittelt werden. Bitte erneut versuchen.",
   resultsTitle: "Ergebnisse",
   resultsLoading: "Lade Live-Daten von InPost…",
   resultsShowing: "Zeige {{n}} von {{f}} Treffern aus {{t}} Punkten.",

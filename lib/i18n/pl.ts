@@ -88,6 +88,14 @@ export const pl: Messages = {
   btnSearch: "Szukaj",
   btnSearching: "Szukam…",
   btnReset: "Wyczyść filtry",
+  btnUseMyLocation: "Użyj mojej lokalizacji",
+  btnLocating: "Pobieram lokalizację…",
+  errGeolocationUnsupported:
+    "Ta przeglądarka nie obsługuje geolokalizacji.",
+  errGeolocationDenied:
+    "Brak zgody na lokalizację. Zezwól na dostęp i spróbuj ponownie.",
+  errGeolocationUnavailable:
+    "Nie udało się pobrać lokalizacji. Spróbuj ponownie za chwilę.",
   resultsTitle: "Wyniki",
   resultsLoading: "Ładowanie danych z InPost…",
   resultsShowing: "Widoczne {{n}} z {{f}} dopasowań spośród {{t}} punktów.",

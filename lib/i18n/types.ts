@@ -50,6 +50,11 @@ export type Messages = {
   btnSearch: string;
   btnSearching: string;
   btnReset: string;
+  btnUseMyLocation: string;
+  btnLocating: string;
+  errGeolocationUnsupported: string;
+  errGeolocationDenied: string;
+  errGeolocationUnavailable: string;
   resultsTitle: string;
   resultsLoading: string;
   resultsShowing: string;

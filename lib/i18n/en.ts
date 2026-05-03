@@ -88,6 +88,14 @@ export const en: Messages = {
   btnSearch: "Search lockers",
   btnSearching: "Searching…",
   btnReset: "Reset filters",
+  btnUseMyLocation: "Use my location",
+  btnLocating: "Getting location…",
+  errGeolocationUnsupported:
+    "This browser does not support geolocation.",
+  errGeolocationDenied:
+    "Location access was denied. Please allow it and try again.",
+  errGeolocationUnavailable:
+    "Could not get your location. Please try again.",
   resultsTitle: "Results",
   resultsLoading: "Loading live data from InPost…",
   resultsShowing: "Showing {{n}} of {{f}} matches from {{t}} points.",

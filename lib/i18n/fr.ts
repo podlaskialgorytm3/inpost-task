@@ -88,6 +88,14 @@ export const fr: Messages = {
   btnSearch: "Rechercher",
   btnSearching: "Recherche…",
   btnReset: "Réinitialiser",
+  btnUseMyLocation: "Utiliser ma position",
+  btnLocating: "Localisation en cours…",
+  errGeolocationUnsupported:
+    "Ce navigateur ne prend pas en charge la géolocalisation.",
+  errGeolocationDenied:
+    "L’accès à la localisation a été refusé. Autorisez-le puis réessayez.",
+  errGeolocationUnavailable:
+    "Impossible de récupérer votre position. Réessayez.",
   resultsTitle: "Résultats",
   resultsLoading: "Chargement des données InPost…",
   resultsShowing: "Affichage de {{n}} sur {{f}} correspondances parmi {{t}} points.",

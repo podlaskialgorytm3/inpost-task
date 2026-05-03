@@ -199,6 +199,7 @@ export default function Home() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [data, setData] = useState<PointsResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = useCallback(
@@ -255,6 +256,45 @@ export default function Home() {
   const handleReset = () => {
     setFilters(DEFAULT_FILTERS);
     void handleSearch(DEFAULT_FILTERS);
+  };
+
+  const handleUseMyLocation = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setError(m.errGeolocationUnsupported);
+      return;
+    }
+
+    setLocating(true);
+    setError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextFilters: Filters = {
+          ...filters,
+          latitude: position.coords.latitude.toFixed(6),
+          longitude: position.coords.longitude.toFixed(6),
+          radiusKm: filters.radiusKm.trim() === "" ? "5" : filters.radiusKm,
+          sortBy: "distance",
+          sortDir: "asc",
+        };
+        setFilters(nextFilters);
+        void handleSearch(nextFilters);
+        setLocating(false);
+      },
+      (geoError) => {
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setError(m.errGeolocationDenied);
+        } else {
+          setError(m.errGeolocationUnavailable);
+        }
+        setLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 120000,
+      },
+    );
   };
 
   const exportGeoJSON = () => {
@@ -847,15 +887,23 @@ export default function Home() {
             <button
               className={styles.primaryButton}
               type="submit"
-              disabled={loading}
+              disabled={loading || locating}
             >
               {loading ? m.btnSearching : m.btnSearch}
             </button>
             <button
               className={styles.secondaryButton}
               type="button"
+              onClick={handleUseMyLocation}
+              disabled={loading || locating}
+            >
+              {locating ? m.btnLocating : m.btnUseMyLocation}
+            </button>
+            <button
+              className={styles.secondaryButton}
+              type="button"
               onClick={handleReset}
-              disabled={loading}
+              disabled={loading || locating}
             >
               {m.btnReset}
             </button>
