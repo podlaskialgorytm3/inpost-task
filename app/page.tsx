@@ -8,26 +8,40 @@ type Filters = {
   query: string;
   city: string;
   province: string;
+  postalCode: string;
   country: string;
   function: string;
   status: string;
   availability: string;
   open24: boolean;
+  openAt: string;
+  latitude: string;
+  longitude: string;
+  radiusKm: string;
+  sortBy: "distance" | "availability" | "name";
+  sortDir: "asc" | "desc";
+  limit: number;
   perPage: number;
-  maxPages: number;
 };
 
 const DEFAULT_FILTERS: Filters = {
   query: "",
   city: "",
   province: "",
+  postalCode: "",
   country: "PL",
   function: "",
   status: "",
   availability: "",
   open24: false,
-  perPage: 50,
-  maxPages: 3,
+  openAt: "",
+  latitude: "",
+  longitude: "",
+  radiusKm: "",
+  sortBy: "availability",
+  sortDir: "desc",
+  limit: 200,
+  perPage: 100,
 };
 
 const FUNCTION_OPTIONS = [
@@ -55,20 +69,52 @@ const AVAILABILITY_OPTIONS = [
   { value: "NO_DATA", label: "No data" },
 ];
 
+const SORT_BY_OPTIONS = [
+  { value: "availability", label: "Availability" },
+  { value: "distance", label: "Distance" },
+  { value: "name", label: "Name" },
+];
+
+const SORT_DIR_OPTIONS = [
+  { value: "desc", label: "Desc" },
+  { value: "asc", label: "Asc" },
+];
+
 const buildQuery = (filters: Filters) => {
   const params = new URLSearchParams();
+  const toNumericParam = (value: string) => {
+    if (value.trim() === "") {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? String(parsed) : null;
+  };
 
   if (filters.query) params.set("query", filters.query);
   if (filters.city) params.set("city", filters.city);
   if (filters.province) params.set("province", filters.province);
+  if (filters.postalCode) params.set("postalCode", filters.postalCode);
   if (filters.country) params.set("country", filters.country);
   if (filters.function) params.set("function", filters.function);
   if (filters.status) params.set("status", filters.status);
   if (filters.availability) params.set("availability", filters.availability);
   if (filters.open24) params.set("open24", "true");
+  if (filters.openAt) params.set("openAt", filters.openAt);
 
+  const latitude = toNumericParam(filters.latitude);
+  const longitude = toNumericParam(filters.longitude);
+  const radiusKm = toNumericParam(filters.radiusKm);
+
+  if (latitude) params.set("lat", latitude);
+  if (longitude) params.set("lon", longitude);
+  if (radiusKm) params.set("radiusKm", radiusKm);
+
+  params.set("sortBy", filters.sortBy);
+  params.set("sortDir", filters.sortDir);
+
+  params.set("limit", String(filters.limit));
   params.set("perPage", String(filters.perPage));
-  params.set("maxPages", String(filters.maxPages));
 
   return params.toString();
 };
@@ -96,6 +142,14 @@ const buildMapUrl = (point: Point) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${latitude},${longitude}`,
   )}`;
+};
+
+const formatDistance = (distance: number | null | undefined) => {
+  if (distance === null || distance === undefined) {
+    return "Distance unavailable";
+  }
+
+  return `${distance.toFixed(2)} km away`;
 };
 
 export default function Home() {
@@ -141,12 +195,172 @@ export default function Home() {
     void handleSearch(DEFAULT_FILTERS);
   };
 
+  const exportGeoJSON = () => {
+    if (!data) return;
+    const geo = {
+      type: "FeatureCollection",
+      features: data.items
+        .filter(
+          (p) => p.location.latitude !== null && p.location.longitude !== null,
+        )
+        .map((p) => ({
+          type: "Feature",
+          properties: {
+            id: p.id,
+            name: p.name,
+            address: p.addressDetails,
+            openingHours: p.openingHours,
+            availableCompartments: p.availableCompartments,
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [p.location.longitude, p.location.latitude],
+          },
+        })),
+    };
+
+    const blob = new Blob([JSON.stringify(geo, null, 2)], {
+      type: "application/geo+json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "inpost-points.geojson";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportCSV = () => {
+    if (!data) return;
+    const rows = [
+      [
+        "id",
+        "name",
+        "country",
+        "lat",
+        "lon",
+        "postCode",
+        "city",
+        "openingHours",
+        "availableCompartments",
+      ],
+    ];
+
+    for (const p of data.items) {
+      rows.push([
+        p.id,
+        p.name,
+        p.country,
+        p.location.latitude ?? "",
+        p.location.longitude ?? "",
+        p.addressDetails.postCode ?? "",
+        p.addressDetails.city ?? "",
+        p.openingHours ?? "",
+        p.availableCompartments === null ? "" : String(p.availableCompartments),
+      ]);
+    }
+
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "inpost-points.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  // Map integration (Leaflet via CDN)
+  const mapRef = useState<any>(null)[0];
+  useEffect(() => {
+    let mounted = true;
+    const ensureLeaflet = async () => {
+      if (!(window as any).L) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+
+        await new Promise<void>((resolve) => {
+          const script = document.createElement("script");
+          script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+          script.async = true;
+          script.onload = () => resolve();
+          document.body.appendChild(script);
+        });
+      }
+
+      if (!mounted) return;
+
+      const L = (window as any).L;
+      if (!L) return;
+
+      // initialize map once
+      const container = document.getElementById("inpost-map");
+      if (!container) return;
+
+      let map: any = (container as any)._leaflet_map;
+      if (!map) {
+        map = L.map(container).setView([52.2297, 21.0122], 6);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+        (container as any)._leaflet_map = map;
+      }
+
+      // clear existing markers
+      if ((container as any)._markers) {
+        for (const m of (container as any)._markers) {
+          map.removeLayer(m);
+        }
+      }
+
+      const markers: any[] = [];
+      for (const p of data?.items ?? []) {
+        if (p.location.latitude !== null && p.location.longitude !== null) {
+          const marker = L.marker([p.location.latitude, p.location.longitude])
+            .bindPopup(
+              `<strong>${p.name}</strong><br/>${p.addressDetails.postCode ?? ""} ${p.addressDetails.city ?? ""}`,
+            )
+            .addTo(map);
+          markers.push(marker);
+        }
+      }
+
+      (container as any)._markers = markers;
+
+      if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.2));
+      }
+    };
+
+    void ensureLeaflet();
+
+    return () => {
+      mounted = false;
+    };
+  }, [data]);
+
   const results = data?.items ?? [];
   const hasData = data !== null;
   const pagesFetched = data?.meta.pagesFetched ?? 0;
   const totalFetched = data?.meta.totalFetched ?? 0;
   const totalFiltered = data?.meta.totalFiltered ?? 0;
   const totalPages = data?.meta.totalPages ?? null;
+  const source = data?.meta.source ?? "--";
+  const cacheAgeSeconds = data?.meta.cacheAgeSeconds ?? null;
+  const fetchMode = data?.meta.fetchMode ?? "all";
+  const truncated = data?.meta.truncated ?? false;
+  const sortByLabel =
+    SORT_BY_OPTIONS.find((option) => option.value === filters.sortBy)?.label ??
+    "Availability";
 
   return (
     <div className={styles.page}>
@@ -157,9 +371,9 @@ export default function Home() {
         </div>
         <h1 className={styles.heroTitle}>InPost Locker Finder</h1>
         <p className={styles.heroCopy}>
-          Filter parcel lockers by city, functions, availability, and 24/7
-          access. The app fetches live data from the official InPost points API
-          and keeps the results responsive by sampling multiple pages.
+          Filter parcel lockers by city, postal code, radius around coordinates,
+          opening time, and availability. The app pulls the full InPost dataset
+          (cached for speed) and ranks results by availability or distance.
         </p>
         <div className={styles.heroStats}>
           <div className={styles.stat}>
@@ -191,8 +405,8 @@ export default function Home() {
         <div>
           <h2 className={styles.sectionTitle}>Search Filters</h2>
           <p className={styles.sectionCopy}>
-            Combine multiple filters to narrow results. For performance, the API
-            request samples up to the max pages configured below.
+            Combine multiple filters to narrow results. The API fetches the
+            complete dataset and caches it briefly to keep repeat searches fast.
           </p>
         </div>
 
@@ -246,6 +460,24 @@ export default function Home() {
           </div>
 
           <div className={styles.field}>
+            <label className={styles.label} htmlFor="postalCode">
+              Postal code
+            </label>
+            <input
+              id="postalCode"
+              className={styles.input}
+              placeholder="00-000"
+              value={filters.postalCode}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  postalCode: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label} htmlFor="country">
               Country
             </label>
@@ -256,6 +488,66 @@ export default function Home() {
               value={filters.country}
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, country: event.target.value }))
+              }
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="latitude">
+              Latitude
+            </label>
+            <input
+              id="latitude"
+              className={styles.input}
+              type="number"
+              step="0.0001"
+              placeholder="52.2297"
+              value={filters.latitude}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  latitude: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="longitude">
+              Longitude
+            </label>
+            <input
+              id="longitude"
+              className={styles.input}
+              type="number"
+              step="0.0001"
+              placeholder="21.0122"
+              value={filters.longitude}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  longitude: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="radiusKm">
+              Radius (km)
+            </label>
+            <input
+              id="radiusKm"
+              className={styles.input}
+              type="number"
+              step="0.1"
+              placeholder="5"
+              value={filters.radiusKm}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  radiusKm: event.target.value,
+                }))
               }
             />
           </div>
@@ -327,8 +619,26 @@ export default function Home() {
           </div>
 
           <div className={styles.field}>
+            <label className={styles.label} htmlFor="openAt">
+              Open at (time)
+            </label>
+            <input
+              id="openAt"
+              className={styles.input}
+              type="time"
+              value={filters.openAt}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  openAt: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label} htmlFor="perPage">
-              Points per page
+              API page size
             </label>
             <input
               id="perPage"
@@ -347,23 +657,69 @@ export default function Home() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="maxPages">
-              Max pages
+            <label className={styles.label} htmlFor="limit">
+              Max results
             </label>
             <input
-              id="maxPages"
+              id="limit"
               className={styles.input}
               type="number"
               min={1}
-              max={10}
-              value={filters.maxPages}
+              max={1000}
+              value={filters.limit}
               onChange={(event) =>
                 setFilters((prev) => ({
                   ...prev,
-                  maxPages: Number(event.target.value) || prev.maxPages,
+                  limit: Number(event.target.value) || prev.limit,
                 }))
               }
             />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="sortBy">
+              Sort by
+            </label>
+            <select
+              id="sortBy"
+              className={styles.select}
+              value={filters.sortBy}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  sortBy: event.target.value as Filters["sortBy"],
+                }))
+              }
+            >
+              {SORT_BY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="sortDir">
+              Sort direction
+            </label>
+            <select
+              id="sortDir"
+              className={styles.select}
+              value={filters.sortDir}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  sortDir: event.target.value as Filters["sortDir"],
+                }))
+              }
+            >
+              {SORT_DIR_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className={styles.field}>
@@ -414,13 +770,43 @@ export default function Home() {
             <p className={styles.sectionCopy}>
               {loading
                 ? "Loading live data from InPost..."
-                : `Showing ${totalFiltered} of ${totalFetched} points sampled.`}
+                : `Showing ${results.length} of ${totalFiltered} matches from ${totalFetched} points.`}
             </p>
           </div>
           <div className={styles.metaStack}>
             <span>Fetched at {data?.meta.fetchedAt ?? "--"}</span>
+            <span>Source: {source}</span>
+            {cacheAgeSeconds !== null && source === "cache" ? (
+              <span>Cache age: {cacheAgeSeconds}s</span>
+            ) : null}
             <span>Country: {filters.country || "--"}</span>
+            <span>
+              Sort: {sortByLabel} ({filters.sortDir})
+            </span>
+            <span>Fetch mode: {fetchMode}</span>
           </div>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={exportGeoJSON}
+              disabled={!data || results.length === 0}
+            >
+              Export GeoJSON
+            </button>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={exportCSV}
+              disabled={!data || results.length === 0}
+            >
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.mapContainer}>
+          <div id="inpost-map" className={styles.mapInner} />
         </div>
 
         {error && (
@@ -434,6 +820,13 @@ export default function Home() {
             {data.errors.map((item) => (
               <span key={item}>{item}</span>
             ))}
+          </div>
+        ) : null}
+
+        {truncated && !loading ? (
+          <div className={styles.notice}>
+            Showing the first {results.length} results. Increase Max results to
+            see more.
           </div>
         ) : null}
 
@@ -490,6 +883,12 @@ export default function Home() {
 
                 <div className={styles.cardMeta}>
                   <span>Open: {point.openingHours ?? "Unknown"}</span>
+                  <span>
+                    Available slots (by size):{" "}
+                    {point.availableCompartments === null
+                      ? "Unknown"
+                      : point.availableCompartments}
+                  </span>
                   <span>Type: {point.type.join(", ") || "-"}</span>
                   <span>
                     Payment:{" "}
@@ -518,6 +917,9 @@ export default function Home() {
                     point.location.longitude !== null
                       ? `${point.location.latitude.toFixed(4)}, ${point.location.longitude.toFixed(4)}`
                       : "Coords unavailable"}
+                  </span>
+                  <span className={styles.distance}>
+                    {formatDistance(point.distanceKm)}
                   </span>
                   {mapUrl && (
                     <a

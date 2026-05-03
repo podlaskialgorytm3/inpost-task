@@ -1,14 +1,25 @@
+export type SortBy = "distance" | "availability" | "name";
+export type SortDir = "asc" | "desc";
+
 export type PointsQuery = {
   query?: string;
   city?: string;
   province?: string;
   country?: string;
+  postalCode?: string;
   function?: string;
   status?: string;
   availability?: string;
   open24?: boolean;
+  openAt?: string;
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
+  sortBy?: SortBy;
+  sortDir?: SortDir;
+  limit?: number;
   perPage: number;
-  maxPages: number;
+  maxPages?: number;
 };
 
 export type PointAddress = {
@@ -47,6 +58,8 @@ export type Point = {
   locationDescription: string | null;
   paymentAvailable: boolean | null;
   lockerAvailability: LockerAvailability | null;
+  availableCompartments: number | null;
+  distanceKm?: number | null;
 };
 
 export type PointsMeta = {
@@ -55,6 +68,10 @@ export type PointsMeta = {
   totalFiltered: number;
   totalPages: number | null;
   fetchedAt: string;
+  source: "cache" | "live";
+  cacheAgeSeconds?: number;
+  fetchMode: "all" | "sample";
+  truncated: boolean;
 };
 
 export type PointsResponse = {

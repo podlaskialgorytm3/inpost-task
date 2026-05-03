@@ -31,6 +31,43 @@ const toOptionalString = (value: string | null) => {
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const toOptionalNumber = (value: string | null, min: number, max: number) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+
+  return Math.min(Math.max(parsed, min), max);
+};
+
+const toSortBy = (value: string | null) => {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value === "distance" || value === "availability" || value === "name") {
+    return value;
+  }
+
+  return undefined;
+};
+
+const toSortDir = (value: string | null) => {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value === "asc" || value === "desc") {
+    return value;
+  }
+
+  return undefined;
+};
+
 export const GET = async (request: Request) => {
   const { searchParams } = new URL(request.url);
 
@@ -39,12 +76,20 @@ export const GET = async (request: Request) => {
     city: toOptionalString(searchParams.get("city")),
     province: toOptionalString(searchParams.get("province")),
     country: toOptionalString(searchParams.get("country")) ?? "PL",
+    postalCode: toOptionalString(searchParams.get("postalCode")),
     function: toOptionalString(searchParams.get("function")),
     status: toOptionalString(searchParams.get("status")),
     availability: toOptionalString(searchParams.get("availability")),
     open24: searchParams.get("open24") === "true",
-    perPage: toNumber(searchParams.get("perPage"), 50, 1, 100),
-    maxPages: toNumber(searchParams.get("maxPages"), 3, 1, 10),
+    openAt: toOptionalString(searchParams.get("openAt")),
+    latitude: toOptionalNumber(searchParams.get("lat"), -90, 90),
+    longitude: toOptionalNumber(searchParams.get("lon"), -180, 180),
+    radiusKm: toOptionalNumber(searchParams.get("radiusKm"), 0.1, 500),
+    sortBy: toSortBy(searchParams.get("sortBy")),
+    sortDir: toSortDir(searchParams.get("sortDir")),
+    limit: toNumber(searchParams.get("limit"), 200, 1, 1000),
+    perPage: toNumber(searchParams.get("perPage"), 100, 1, 100),
+    maxPages: toOptionalNumber(searchParams.get("maxPages"), 1, 5000),
   };
 
   try {

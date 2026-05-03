@@ -13,9 +13,13 @@ Provide a focused UI that pulls live data from the InPost API, samples multiple 
 ## Features
 
 - Live API integration with pagination handling
-- Filters for keyword, city, province, country, functions, status, and 24/7 opening hours
-- Availability status and locker metadata displayed per result
+- Filters for keyword, city, province, postal code, radius search, opening time, and 24/7 access
+- Sorting by availability, distance, or name
+- Availability status and available slot counts by size (when provided)
 - Google Maps deep link for each point
+- Google Maps deep link for each point
+- Export current results as GeoJSON or CSV
+- Simple interactive map (Leaflet via CDN) showing current results
 - Graceful error handling and parsing of missing data
 
 ## Architecture
@@ -37,7 +41,9 @@ Open http://localhost:3000 to use the app.
 
 ## Notes
 
-- The UI samples a limited number of API pages (configurable with the Max pages field) for performance.
+- The API fetches the full paginated dataset and keeps it in memory for a short time to speed up repeat searches.
+- Distance sorting and radius filtering require latitude + longitude inputs.
+- Results are capped in the UI (adjust with Max results) to keep the page responsive.
 - The InPost API is public and does not require authentication.
 
 ## Assumptions
