@@ -107,6 +107,7 @@ export const fr: Messages = {
   cardUnknown: "Inconnu",
   cardCoordsUnavailable: "Coordonnées indisponibles",
   cardOpenMaps: "Ouvrir dans Maps",
+  cardOpenDetails: "Détails du point",
   cardMoreFunctions: "+{{n}} de plus",
   distanceUnavailable: "Distance indisponible",
   distanceKmAway: "à {{n}} km",

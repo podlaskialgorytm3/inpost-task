@@ -76,6 +76,7 @@ export type Messages = {
   cardUnknown: string;
   cardCoordsUnavailable: string;
   cardOpenMaps: string;
+  cardOpenDetails: string;
   cardMoreFunctions: string;
   distanceUnavailable: string;
   distanceKmAway: string;

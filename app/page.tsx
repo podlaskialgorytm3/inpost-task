@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import styles from "./page.module.css";
 import type { Point, PointsResponse } from "@/lib/types";
 import { interpolate, LOCALES, type Locale } from "@/lib/i18n";
@@ -143,6 +144,15 @@ const buildMapUrl = (point: Point) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${latitude},${longitude}`,
   )}`;
+};
+
+const encodePointPayload = (point: Point) => {
+  const bytes = new TextEncoder().encode(JSON.stringify(point));
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return encodeURIComponent(btoa(binary));
 };
 
 export default function Home() {
@@ -957,6 +967,7 @@ export default function Home() {
               point.lockerAvailability?.status ?? null,
             );
             const mapUrl = buildMapUrl(point);
+            const detailsHref = `/points/${encodeURIComponent(point.id)}?data=${encodePointPayload(point)}`;
             const functionList = point.functions.slice(0, 5);
             const remaining = point.functions.length - functionList.length;
             const addressLine = [
@@ -1051,6 +1062,14 @@ export default function Home() {
                       {m.cardOpenMaps}
                     </a>
                   )}
+                  <Link
+                    className={styles.mapLink}
+                    href={detailsHref}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {m.cardOpenDetails}
+                  </Link>
                 </div>
               </article>
             );
