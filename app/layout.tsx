@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
 import { AppProviders } from "./providers";
 import "./globals.css";
@@ -43,7 +44,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <Script
+          id="inpost-theme-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeBootScript }}
+        />
       </head>
       <body className="app-shell">
         <AppProviders>{children}</AppProviders>

@@ -149,7 +149,13 @@ const formatApiEnumLabel = (value: string) =>
     .join(" ");
 
 export default function Home() {
-  const { locale, setLocale, theme, toggleTheme, messages: m } = useAppSettings();
+  const {
+    locale,
+    setLocale,
+    theme,
+    toggleTheme,
+    messages: m,
+  } = useAppSettings();
 
   const functionOptions = useMemo(
     () =>
@@ -243,9 +249,7 @@ export default function Home() {
         setCurrentPage(1);
       } catch (fetchError) {
         const message =
-          fetchError instanceof Error
-            ? fetchError.message
-            : m.errUnexpected;
+          fetchError instanceof Error ? fetchError.message : m.errUnexpected;
         setError(message);
       } finally {
         setLoading(false);
@@ -567,396 +571,406 @@ export default function Home() {
             </button>
           </div>
         </div>
-        <div className={`${styles.revealPanel} ${showFilters ? styles.revealOpen : ""}`}>
+        <div
+          className={`${styles.revealPanel} ${showFilters ? styles.revealOpen : ""}`}
+        >
           <div>
             <h2 className={styles.sectionTitle}>{m.searchFiltersTitle}</h2>
             <p className={styles.sectionCopy}>{m.searchFiltersCopy}</p>
           </div>
         </div>
-        <div className={`${styles.revealPanel} ${showFilters ? styles.revealOpen : ""}`}>
+        <div
+          className={`${styles.revealPanel} ${showFilters ? styles.revealOpen : ""}`}
+        >
           <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="query">
-              {m.labelKeyword}
-            </label>
-            <input
-              id="query"
-              className={styles.input}
-              placeholder={m.phKeyword}
-              value={filters.query}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, query: event.target.value }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="city">
-              {m.labelCity}
-            </label>
-            <input
-              id="city"
-              className={styles.input}
-              placeholder={m.phCity}
-              value={filters.city}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, city: event.target.value }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="province">
-              {m.labelProvince}
-            </label>
-            <input
-              id="province"
-              className={styles.input}
-              placeholder={m.phProvince}
-              value={filters.province}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  province: event.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="postalCode">
-              {m.labelPostalCode}
-            </label>
-            <input
-              id="postalCode"
-              className={styles.input}
-              placeholder={m.phPostal}
-              value={filters.postalCode}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  postalCode: event.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="country">
-              {m.labelCountry}
-            </label>
-            <input
-              id="country"
-              className={styles.input}
-              placeholder={m.phCountry}
-              value={filters.country}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, country: event.target.value }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="latitude">
-              {m.labelLatitude}
-            </label>
-            <input
-              id="latitude"
-              className={styles.input}
-              type="number"
-              step="0.0001"
-              placeholder={m.phLat}
-              value={filters.latitude}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  latitude: event.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="longitude">
-              {m.labelLongitude}
-            </label>
-            <input
-              id="longitude"
-              className={styles.input}
-              type="number"
-              step="0.0001"
-              placeholder={m.phLon}
-              value={filters.longitude}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  longitude: event.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="radiusKm">
-              {m.labelRadiusKm}
-            </label>
-            <input
-              id="radiusKm"
-              className={styles.input}
-              type="number"
-              step="0.1"
-              placeholder={m.phRadius}
-              value={filters.radiusKm}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  radiusKm: event.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="function">
-              {m.labelFunction}
-            </label>
-            <select
-              id="function"
-              className={styles.select}
-              value={filters.function}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  function: event.target.value,
-                }))
-              }
-            >
-              {functionOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="status">
-              {m.labelStatus}
-            </label>
-            <select
-              id="status"
-              className={styles.select}
-              value={filters.status}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, status: event.target.value }))
-              }
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="availability">
-              {m.labelAvailability}
-            </label>
-            <select
-              id="availability"
-              className={styles.select}
-              value={filters.availability}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  availability: event.target.value,
-                }))
-              }
-            >
-              {availabilityOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="openAt">
-              {m.labelOpenAt}
-            </label>
-            <input
-              id="openAt"
-              className={styles.input}
-              type="time"
-              value={filters.openAt}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  openAt: event.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="perPage">
-              {m.labelApiPageSize}
-            </label>
-            <input
-              id="perPage"
-              className={styles.input}
-              type="number"
-              min={1}
-              max={100}
-              value={filters.perPage}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  perPage: Number(event.target.value) || prev.perPage,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="maxPages">
-              {m.labelMaxApiPages}
-            </label>
-            <input
-              id="maxPages"
-              className={styles.input}
-              type="number"
-              min={1}
-              max={5000}
-              placeholder={m.phMaxPagesAll}
-              value={filters.maxPages}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  maxPages: event.target.value,
-                }))
-              }
-            />
-            <span className={styles.hint}>{m.hintMaxApiPages}</span>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="limit">
-              {m.labelMaxResults}
-            </label>
-            <input
-              id="limit"
-              className={styles.input}
-              type="number"
-              min={1}
-              max={1000}
-              value={filters.limit}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  limit: Number(event.target.value) || prev.limit,
-                }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="sortBy">
-              {m.labelSortBy}
-            </label>
-            <select
-              id="sortBy"
-              className={styles.select}
-              value={filters.sortBy}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  sortBy: event.target.value as Filters["sortBy"],
-                }))
-              }
-            >
-              {sortByOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="sortDir">
-              {m.labelSortDir}
-            </label>
-            <select
-              id="sortDir"
-              className={styles.select}
-              value={filters.sortDir}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  sortDir: event.target.value as Filters["sortDir"],
-                }))
-              }
-            >
-              {sortDirOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.toggle} htmlFor="open24">
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="query">
+                {m.labelKeyword}
+              </label>
               <input
-                id="open24"
-                className={styles.checkbox}
-                type="checkbox"
-                checked={filters.open24}
+                id="query"
+                className={styles.input}
+                placeholder={m.phKeyword}
+                value={filters.query}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, query: event.target.value }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="city">
+                {m.labelCity}
+              </label>
+              <input
+                id="city"
+                className={styles.input}
+                placeholder={m.phCity}
+                value={filters.city}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, city: event.target.value }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="province">
+                {m.labelProvince}
+              </label>
+              <input
+                id="province"
+                className={styles.input}
+                placeholder={m.phProvince}
+                value={filters.province}
                 onChange={(event) =>
                   setFilters((prev) => ({
                     ...prev,
-                    open24: event.target.checked,
+                    province: event.target.value,
                   }))
                 }
               />
-              <span>{m.labelOpen24}</span>
-            </label>
-            <span className={styles.hint}>{m.hintOpen24}</span>
-          </div>
+            </div>
 
-          <div className={styles.actions}>
-            <button
-              className={styles.primaryButton}
-              type="submit"
-              disabled={loading || locating}
-            >
-              {loading ? m.btnSearching : m.btnSearch}
-            </button>
-            <button
-              className={styles.secondaryButton}
-              type="button"
-              onClick={handleUseMyLocation}
-              disabled={loading || locating}
-            >
-              {locating ? m.btnLocating : m.btnUseMyLocation}
-            </button>
-            <button
-              className={styles.secondaryButton}
-              type="button"
-              onClick={handleReset}
-              disabled={loading || locating}
-            >
-              {m.btnReset}
-            </button>
-          </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="postalCode">
+                {m.labelPostalCode}
+              </label>
+              <input
+                id="postalCode"
+                className={styles.input}
+                placeholder={m.phPostal}
+                value={filters.postalCode}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    postalCode: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="country">
+                {m.labelCountry}
+              </label>
+              <input
+                id="country"
+                className={styles.input}
+                placeholder={m.phCountry}
+                value={filters.country}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    country: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="latitude">
+                {m.labelLatitude}
+              </label>
+              <input
+                id="latitude"
+                className={styles.input}
+                type="number"
+                step="0.0001"
+                placeholder={m.phLat}
+                value={filters.latitude}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    latitude: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="longitude">
+                {m.labelLongitude}
+              </label>
+              <input
+                id="longitude"
+                className={styles.input}
+                type="number"
+                step="0.0001"
+                placeholder={m.phLon}
+                value={filters.longitude}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    longitude: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="radiusKm">
+                {m.labelRadiusKm}
+              </label>
+              <input
+                id="radiusKm"
+                className={styles.input}
+                type="number"
+                step="0.1"
+                placeholder={m.phRadius}
+                value={filters.radiusKm}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    radiusKm: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="function">
+                {m.labelFunction}
+              </label>
+              <select
+                id="function"
+                className={styles.select}
+                value={filters.function}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    function: event.target.value,
+                  }))
+                }
+              >
+                {functionOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="status">
+                {m.labelStatus}
+              </label>
+              <select
+                id="status"
+                className={styles.select}
+                value={filters.status}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    status: event.target.value,
+                  }))
+                }
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="availability">
+                {m.labelAvailability}
+              </label>
+              <select
+                id="availability"
+                className={styles.select}
+                value={filters.availability}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    availability: event.target.value,
+                  }))
+                }
+              >
+                {availabilityOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="openAt">
+                {m.labelOpenAt}
+              </label>
+              <input
+                id="openAt"
+                className={styles.input}
+                type="time"
+                value={filters.openAt}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    openAt: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="perPage">
+                {m.labelApiPageSize}
+              </label>
+              <input
+                id="perPage"
+                className={styles.input}
+                type="number"
+                min={1}
+                max={100}
+                value={filters.perPage}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    perPage: Number(event.target.value) || prev.perPage,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="maxPages">
+                {m.labelMaxApiPages}
+              </label>
+              <input
+                id="maxPages"
+                className={styles.input}
+                type="number"
+                min={1}
+                max={5000}
+                placeholder={m.phMaxPagesAll}
+                value={filters.maxPages}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    maxPages: event.target.value,
+                  }))
+                }
+              />
+              <span className={styles.hint}>{m.hintMaxApiPages}</span>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="limit">
+                {m.labelMaxResults}
+              </label>
+              <input
+                id="limit"
+                className={styles.input}
+                type="number"
+                min={1}
+                max={1000}
+                value={filters.limit}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    limit: Number(event.target.value) || prev.limit,
+                  }))
+                }
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="sortBy">
+                {m.labelSortBy}
+              </label>
+              <select
+                id="sortBy"
+                className={styles.select}
+                value={filters.sortBy}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    sortBy: event.target.value as Filters["sortBy"],
+                  }))
+                }
+              >
+                {sortByOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="sortDir">
+                {m.labelSortDir}
+              </label>
+              <select
+                id="sortDir"
+                className={styles.select}
+                value={filters.sortDir}
+                onChange={(event) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    sortDir: event.target.value as Filters["sortDir"],
+                  }))
+                }
+              >
+                {sortDirOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.toggle} htmlFor="open24">
+                <input
+                  id="open24"
+                  className={styles.checkbox}
+                  type="checkbox"
+                  checked={filters.open24}
+                  onChange={(event) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      open24: event.target.checked,
+                    }))
+                  }
+                />
+                <span>{m.labelOpen24}</span>
+              </label>
+              <span className={styles.hint}>{m.hintOpen24}</span>
+            </div>
+
+            <div className={styles.actions}>
+              <button
+                className={styles.primaryButton}
+                type="submit"
+                disabled={loading || locating}
+              >
+                {loading ? m.btnSearching : m.btnSearch}
+              </button>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={loading || locating}
+              >
+                {locating ? m.btnLocating : m.btnUseMyLocation}
+              </button>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={handleReset}
+                disabled={loading || locating}
+              >
+                {m.btnReset}
+              </button>
+            </div>
           </form>
         </div>
       </section>
 
-      <section className={styles.results}>
+      <section className={styles.results} aria-busy={loading}>
         <div className={styles.revealBar}>
           <div className={styles.revealItem}>
             <button
@@ -966,7 +980,9 @@ export default function Home() {
               aria-expanded={showMap}
             >
               <span>
-                {(showMap ? m.toggleHideMe : m.toggleRevealMe) + " " + m.toggleMap}
+                {(showMap ? m.toggleHideMe : m.toggleRevealMe) +
+                  " " +
+                  m.toggleMap}
               </span>
               <span className={styles.revealArrow} aria-hidden>
                 {showMap ? "▾" : "▸"}
@@ -975,7 +991,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={`${styles.revealPanel} ${showMap ? styles.revealOpen : ""}`}>
+        <div
+          className={`${styles.revealPanel} ${showMap ? styles.revealOpen : ""}`}
+        >
           <div className={styles.mapContainer}>
             <div id="inpost-map" className={styles.mapInner} />
           </div>
@@ -1001,117 +1019,126 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
+        <div
+          className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}
+        >
           <div className={styles.resultsHeader}>
-          <div>
-            <h2 className={styles.sectionTitle}>{m.resultsTitle}</h2>
-            <p className={styles.sectionCopy}>
-              {loading
-                ? m.resultsLoading
-                : interpolate(m.resultsShowing, {
-                    n: results.length,
-                    f: totalFiltered,
-                    t: totalFetched,
-                  })}
-            </p>
-          </div>
-          <div className={styles.metaStack}>
-            <span>
-              {m.metaFetchedAt} {data?.meta.fetchedAt ?? "--"}
-            </span>
-            <span>
-              {m.metaSource}: {source}
-            </span>
-            {cacheAgeSeconds !== null && source === "cache" ? (
+            <div>
+              <h2 className={styles.sectionTitle}>{m.resultsTitle}</h2>
+              <p className={styles.sectionCopy}>
+                {loading
+                  ? m.resultsLoading
+                  : interpolate(m.resultsShowing, {
+                      n: results.length,
+                      f: totalFiltered,
+                      t: totalFetched,
+                    })}
+              </p>
+            </div>
+            <div className={styles.metaStack}>
               <span>
-                {interpolate(m.metaCacheAge, { n: cacheAgeSeconds })}
+                {m.metaFetchedAt} {data?.meta.fetchedAt ?? "--"}
               </span>
-            ) : null}
-            <span>
-              {m.metaCountry}: {filters.country || "--"}
-            </span>
-            <span>
-              {m.metaSort}: {sortByLabel} ({filters.sortDir})
-            </span>
-            <span>
-              {m.metaFetchMode}: {fetchModeLabel}
-            </span>
-          </div>
-          <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={exportGeoJSON}
-              disabled={!data || results.length === 0}
-            >
-              {m.btnExportGeo}
-            </button>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={exportCSV}
-              disabled={!data || results.length === 0}
-            >
-              {m.btnExportCsv}
-            </button>
-          </div>
-        </div>
-
-        <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
-          <div className={styles.paginationWrap}>
-            <label className={styles.paginationLabel} htmlFor="items-per-page">
-              {m.paginationPerPage}
-            </label>
-            <select
-              id="items-per-page"
-              className={styles.paginationSelect}
-              value={itemsPerPage}
-              onChange={(event) => {
-                setItemsPerPage(Number(event.target.value));
-                setCurrentPage(1);
-              }}
-            >
-              {[10, 20, 30, 50, 100].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-            <div className={styles.paginationNav}>
+              <span>
+                {m.metaSource}: {source}
+              </span>
+              {cacheAgeSeconds !== null && source === "cache" ? (
+                <span>
+                  {interpolate(m.metaCacheAge, { n: cacheAgeSeconds })}
+                </span>
+              ) : null}
+              <span>
+                {m.metaCountry}: {filters.country || "--"}
+              </span>
+              <span>
+                {m.metaSort}: {sortByLabel} ({filters.sortDir})
+              </span>
+              <span>
+                {m.metaFetchMode}: {fetchModeLabel}
+              </span>
+            </div>
+            <div className={styles.actions}>
               <button
                 type="button"
-                className={styles.pageButton}
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={safePage <= 1}
+                className={styles.secondaryButton}
+                onClick={exportGeoJSON}
+                disabled={!data || results.length === 0}
               >
-                {m.paginationPrev}
+                {m.btnExportGeo}
               </button>
-              {pageNumbers.map((pageNo) => (
-                <button
-                  key={pageNo}
-                  type="button"
-                  className={`${styles.pageNumber} ${pageNo === safePage ? styles.pageNumberActive : ""}`}
-                  onClick={() => setCurrentPage(pageNo)}
-                >
-                  {pageNo}
-                </button>
-              ))}
               <button
                 type="button"
-                className={styles.pageButton}
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(totalUiPages, prev + 1))
-                }
-                disabled={safePage >= totalUiPages}
+                className={styles.secondaryButton}
+                onClick={exportCSV}
+                disabled={!data || results.length === 0}
               >
-                {m.paginationNext}
+                {m.btnExportCsv}
               </button>
             </div>
-            <span className={styles.paginationInfo}>
-              {m.paginationPage} {safePage}/{totalUiPages}
-            </span>
           </div>
-        </div>
+
+          <div
+            className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}
+          >
+            <div className={styles.paginationWrap}>
+              <label
+                className={styles.paginationLabel}
+                htmlFor="items-per-page"
+              >
+                {m.paginationPerPage}
+              </label>
+              <select
+                id="items-per-page"
+                className={styles.paginationSelect}
+                value={itemsPerPage}
+                onChange={(event) => {
+                  setItemsPerPage(Number(event.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                {[10, 20, 30, 50, 100].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <div className={styles.paginationNav}>
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={safePage <= 1}
+                >
+                  {m.paginationPrev}
+                </button>
+                {pageNumbers.map((pageNo) => (
+                  <button
+                    key={pageNo}
+                    type="button"
+                    className={`${styles.pageNumber} ${pageNo === safePage ? styles.pageNumberActive : ""}`}
+                    onClick={() => setCurrentPage(pageNo)}
+                  >
+                    {pageNo}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalUiPages, prev + 1))
+                  }
+                  disabled={safePage >= totalUiPages}
+                >
+                  {m.paginationNext}
+                </button>
+              </div>
+              <span className={styles.paginationInfo}>
+                {m.paginationPage} {safePage}/{totalUiPages}
+              </span>
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -1138,118 +1165,168 @@ export default function Home() {
           <div className={styles.emptyState}>{m.emptyState}</div>
         )}
 
-        <div className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}>
-          <div className={styles.cards}>
-          {paginatedResults.map((point, index) => {
-            const mapUrl = buildMapUrl(point);
-            const detailsHref = `/points/${encodeURIComponent(point.id)}?data=${encodePointPayload(point)}`;
-            const functionList = point.functions.slice(0, 5);
-            const remaining = point.functions.length - functionList.length;
-            const addressLine = [
-              point.address.line1,
-              point.address.line2,
-              [point.addressDetails.postCode, point.addressDetails.city]
-                .filter(Boolean)
-                .join(" "),
-              point.addressDetails.province,
-            ]
-              .filter(Boolean)
-              .join(", ");
-
-            return (
-              <article
-                key={point.id}
-                className={styles.card}
-                style={{ animationDelay: `${index * 40}ms` }}
-              >
-                <div className={styles.cardHeader}>
-                  <div>
-                    <h3 className={styles.cardTitle}>{point.name}</h3>
-                    <p className={styles.cardSubtitle}>{point.status}</p>
+        {loading && (
+          <div
+            className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}
+          >
+            <div
+              className={styles.loadingPanel}
+              role="status"
+              aria-live="polite"
+            >
+              <div className={styles.loadingHeader}>
+                <span className={styles.loadingSpinner} aria-hidden="true" />
+                <span className={styles.loadingLabel}>{m.resultsLoading}</span>
+              </div>
+              <div className={styles.loadingGrid} aria-hidden="true">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={`loading-${index}`} className={styles.loadingCard}>
+                    <div
+                      className={`${styles.loadingLine} ${styles.loadingLineWide}`}
+                    />
+                    <div
+                      className={`${styles.loadingLine} ${styles.loadingLineMedium}`}
+                    />
+                    <div
+                      className={`${styles.loadingLine} ${styles.loadingLineShort}`}
+                    />
+                    <div className={styles.loadingTagRow}>
+                      <div
+                        className={`${styles.loadingPill} ${styles.loadingPillWide}`}
+                      />
+                      <div className={styles.loadingPill} />
+                    </div>
+                    <div className={styles.loadingFooter}>
+                      <div
+                        className={`${styles.loadingLine} ${styles.loadingLineShort}`}
+                      />
+                      <div
+                        className={`${styles.loadingLine} ${styles.loadingLineShort}`}
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <p className={styles.address}>
-                  {addressLine || m.cardAddressUnavailable}
-                </p>
-                {point.locationDescription && (
-                  <p className={styles.description}>
-                    {point.locationDescription}
-                  </p>
-                )}
-
-                <div className={styles.cardMeta}>
-                  <span>
-                    {m.cardOpen}: {point.openingHours ?? m.cardUnknown}
-                  </span>
-                  <span>
-                    {m.cardSlots}:{" "}
-                    {point.availableCompartments === null
-                      ? m.cardUnknown
-                      : point.availableCompartments}
-                  </span>
-                  <span>
-                    {m.cardType}:{" "}
-                    {point.type.length > 0
-                      ? point.type
-                          .map(
-                            (type) =>
-                              m.options.types[type] ?? formatApiEnumLabel(type),
-                          )
-                          .join(", ")
-                      : "-"}
-                  </span>
-                  <span>
-                    {m.cardPayment}:{" "}
-                    {point.paymentAvailable === null
-                      ? m.cardPaymentUnknown
-                      : point.paymentAvailable
-                        ? m.cardPaymentYes
-                        : m.cardPaymentNo}
-                  </span>
-                </div>
-
-                <div className={styles.tagList}>
-                  {functionList.map((item) => (
-                    <span key={item} className={styles.tag}>
-                      {m.options.functions[item] ?? item}
-                    </span>
-                  ))}
-                  {remaining > 0 && (
-                    <span className={styles.tagMuted}>
-                      {interpolate(m.cardMoreFunctions, { n: remaining })}
-                    </span>
-                  )}
-                </div>
-
-                <div className={styles.cardFooter}>
-                  <span className={styles.coords}>
-                    {point.location.latitude !== null &&
-                    point.location.longitude !== null
-                      ? `${point.location.latitude.toFixed(4)}, ${point.location.longitude.toFixed(4)}`
-                      : m.cardCoordsUnavailable}
-                  </span>
-                  <span className={styles.distance}>
-                    {formatDistanceKm(point.distanceKm)}
-                  </span>
-                  {mapUrl && (
-                    <a
-                      className={styles.mapLink}
-                      href={mapUrl}
-                      rel="noreferrer"
-                    >
-                      {m.cardOpenMaps}
-                    </a>
-                  )}
-                  <Link className={styles.mapLink} href={detailsHref}>
-                    {m.cardOpenDetails}
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+        {!loading && (
+          <div
+            className={`${styles.revealPanel} ${showResults ? styles.revealOpen : ""}`}
+          >
+            <div className={styles.cards}>
+              {paginatedResults.map((point, index) => {
+                const mapUrl = buildMapUrl(point);
+                const detailsHref = `/points/${encodeURIComponent(point.id)}?data=${encodePointPayload(point)}`;
+                const functionList = point.functions.slice(0, 5);
+                const remaining = point.functions.length - functionList.length;
+                const addressLine = [
+                  point.address.line1,
+                  point.address.line2,
+                  [point.addressDetails.postCode, point.addressDetails.city]
+                    .filter(Boolean)
+                    .join(" "),
+                  point.addressDetails.province,
+                ]
+                  .filter(Boolean)
+                  .join(", ");
+
+                return (
+                  <article
+                    key={point.id}
+                    className={styles.card}
+                    style={{ animationDelay: `${index * 40}ms` }}
+                  >
+                    <div className={styles.cardHeader}>
+                      <div>
+                        <h3 className={styles.cardTitle}>{point.name}</h3>
+                        <p className={styles.cardSubtitle}>{point.status}</p>
+                      </div>
+                    </div>
+
+                    <p className={styles.address}>
+                      {addressLine || m.cardAddressUnavailable}
+                    </p>
+                    {point.locationDescription && (
+                      <p className={styles.description}>
+                        {point.locationDescription}
+                      </p>
+                    )}
+
+                    <div className={styles.cardMeta}>
+                      <span>
+                        {m.cardOpen}: {point.openingHours ?? m.cardUnknown}
+                      </span>
+                      <span>
+                        {m.cardSlots}:{" "}
+                        {point.availableCompartments === null
+                          ? m.cardUnknown
+                          : point.availableCompartments}
+                      </span>
+                      <span>
+                        {m.cardType}:{" "}
+                        {point.type.length > 0
+                          ? point.type
+                              .map(
+                                (type) =>
+                                  m.options.types[type] ??
+                                  formatApiEnumLabel(type),
+                              )
+                              .join(", ")
+                          : "-"}
+                      </span>
+                      <span>
+                        {m.cardPayment}:{" "}
+                        {point.paymentAvailable === null
+                          ? m.cardPaymentUnknown
+                          : point.paymentAvailable
+                            ? m.cardPaymentYes
+                            : m.cardPaymentNo}
+                      </span>
+                    </div>
+
+                    <div className={styles.tagList}>
+                      {functionList.map((item) => (
+                        <span key={item} className={styles.tag}>
+                          {m.options.functions[item] ?? item}
+                        </span>
+                      ))}
+                      {remaining > 0 && (
+                        <span className={styles.tagMuted}>
+                          {interpolate(m.cardMoreFunctions, { n: remaining })}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className={styles.cardFooter}>
+                      <span className={styles.coords}>
+                        {point.location.latitude !== null &&
+                        point.location.longitude !== null
+                          ? `${point.location.latitude.toFixed(4)}, ${point.location.longitude.toFixed(4)}`
+                          : m.cardCoordsUnavailable}
+                      </span>
+                      <span className={styles.distance}>
+                        {formatDistanceKm(point.distanceKm)}
+                      </span>
+                      {mapUrl && (
+                        <a
+                          className={styles.mapLink}
+                          href={mapUrl}
+                          rel="noreferrer"
+                        >
+                          {m.cardOpenMaps}
+                        </a>
+                      )}
+                      <Link className={styles.mapLink} href={detailsHref}>
+                        {m.cardOpenDetails}
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
