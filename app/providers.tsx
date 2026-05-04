@@ -116,3 +116,4 @@ export function useAppSettings(): AppSettings {
 }
 
 export { LOCALES };
+export type { Locale };
